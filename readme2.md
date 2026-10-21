@@ -251,3 +251,5 @@ s_AB(t) = V_A(t) - alpha_AB - beta_AB * V_B(t)
 ```
 
 因此 `Rebalanced cumulative P&L` 同时包含 realized 与 unrealized，不是单独的税损金额。当前 VaR/CVaR 单元格针对未调仓基线；后面的 beta 图分析调仓后的收益。借券费及 TC 非零尚未实现，改为非零会明确报错。
+
+市场 beta 比较统一由 `beta_y` 控制：默认两边都用整个多空组合的 `daily_return`；若选择 `long_return` 或 `short_return`，不调仓与调仓两处一起切换。两边使用同样的 SPY 日期及 60 日 rolling 窗口，避免把单独 long 与整个多空组合进行比较。

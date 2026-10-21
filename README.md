@@ -163,7 +163,7 @@ Daily position matrices retain all 30 tickers in triplet order (`NVDA, ANET, NVM
 
 ## Market beta, VaR and CVaR
 
-`BetaAnalysis(x, y)` regresses aligned daily returns as `y = alpha + beta*x + error`. With SPY as x, this estimates market exposure; it is different from a formation hedge coefficient. Rolling beta uses trailing covariance(y, x) divided by variance(x), with 60 trading days in the notebook. The initial Open-to-Close day is excluded when compared with Close-to-Close market returns.
+`BetaAnalysis(x, y)` regresses aligned daily returns as `y = alpha + beta*x + error`. The shared notebook setting `beta_y` selects the same return column for baseline and rebalanced analyses, defaulting to combined long/short `daily_return`. Both use identical SPY dates, initial-day exclusion and rolling windows. The final comparison table reports full-sample and latest rolling estimates side by side; it does not compare long-only returns with combined long/short returns. With SPY as x, this estimates market exposure; it is different from a formation hedge coefficient. Rolling beta uses trailing covariance(y, x) divided by variance(x), with 60 trading days in the notebook. The initial Open-to-Close day is excluded when compared with Close-to-Close market returns.
 
 `RiskAnalysis(pnl, confidence=0.95)` uses monetary P&L directly. Historical VaR is the empirical loss quantile; CVaR averages the worst probability mass, including partial boundary weights. The parametric estimates assume normal P&L and use sample mean and sample standard deviation. No exposure multiplier or multi-day scaling is applied.
 
