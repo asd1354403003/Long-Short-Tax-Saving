@@ -1,0 +1,34 @@
+{
+  "description": "Curated Yahoo industry candidate graph. The program discovers tickers automatically within these industries. Edges describe economic relationships or related exposures, not verified company-specific supplier/customer contracts.",
+  "sources": [
+    {"url": "https://www.asml.com/en/products", "supports": "Semiconductor equipment is used in chip manufacturing."},
+    {"url": "https://www.eia.gov/energyexplained/oil-and-petroleum-products/", "supports": "Oil production, refining and petroleum product use."},
+    {"url": "https://www.ers.usda.gov/topics/food-markets-prices/processing-marketing", "supports": "Agricultural production, food processing and distribution."},
+    {"url": "https://www.energy.gov/oe/supply-chain-resources", "supports": "Electric grid equipment and utility supply chains."}
+  ],
+  "groups": [
+    {"type": "supply_chain_candidates", "industries": ["Semiconductors", "Semiconductor Equipment & Materials", "Electronic Components", "Computer Hardware", "Consumer Electronics"]},
+    {"type": "related_business_exposure", "industries": ["Software—Infrastructure", "Software—Application", "Information Technology Services"]},
+    {"type": "supply_chain_candidates", "industries": ["Oil & Gas E&P", "Oil & Gas Integrated", "Oil & Gas Midstream", "Oil & Gas Refining & Marketing", "Oil & Gas Equipment & Services", "Oil & Gas Drilling"]},
+    {"type": "supply_chain_candidates", "industries": ["Auto Manufacturers", "Auto Parts", "Auto & Truck Dealerships"]},
+    {"type": "supply_chain_candidates", "industries": ["Farm Products", "Agricultural Inputs", "Packaged Foods", "Food Distribution", "Grocery Stores", "Packaging & Containers"]},
+    {"type": "supply_chain_candidates", "industries": ["Utilities—Regulated Electric", "Utilities—Diversified", "Utilities—Independent Power Producers", "Utilities—Renewable", "Electrical Equipment & Parts"]},
+    {"type": "related_business_exposure", "industries": ["Utilities—Regulated Gas", "Utilities—Regulated Electric", "Utilities—Diversified"]},
+    {"type": "supply_chain_candidates", "industries": ["Drug Manufacturers—General", "Drug Manufacturers—Specialty & Generic", "Medical Distribution"]},
+    {"type": "related_business_exposure", "industries": ["Medical Devices", "Medical Instruments & Supplies", "Diagnostics & Research"]},
+    {"type": "related_business_exposure", "industries": ["Banks—Diversified", "Banks—Regional", "Credit Services", "Capital Markets", "Asset Management", "Financial Data & Stock Exchanges"]},
+    {"type": "related_business_exposure", "industries": ["Insurance—Diversified", "Insurance—Property & Casualty", "Insurance—Life", "Insurance—Reinsurance", "Insurance—Specialty", "Insurance Brokers"]},
+    {"type": "related_business_exposure", "industries": ["Railroads", "Trucking", "Integrated Freight & Logistics", "Marine Shipping"]},
+    {"type": "supply_chain_candidates", "industries": ["Residential Construction", "Building Materials", "Building Products & Equipment", "Engineering & Construction", "Home Improvement Retail"]},
+    {"type": "supply_chain_candidates", "industries": ["Steel", "Aluminum", "Other Industrial Metals & Mining", "Metal Fabrication"]},
+    {"type": "related_business_exposure", "industries": ["Apparel Manufacturing", "Apparel Retail", "Footwear & Accessories", "Textile Manufacturing", "Luxury Goods"]},
+    {"type": "related_business_exposure", "industries": ["REIT—Residential", "REIT—Office", "REIT—Retail", "REIT—Diversified", "REIT—Industrial", "REIT—Specialty"]}
+  ],
+  "related_tickers": {},
+  "notes": [
+    "Each group expands symmetrically; an edge does not specify supplier direction or revenue dependence.",
+    "Related financial, insurance, transport and real-estate exposures are labeled related_business_exposure, not upstream/downstream.",
+    "The cited sources provide industry context, not independent verification of every edge or company relationship.",
+    "Yahoo classifications and the market-cap ordering are current snapshots; this is not a point-in-time historical universe."
+  ]
+}
