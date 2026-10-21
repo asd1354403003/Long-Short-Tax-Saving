@@ -259,7 +259,7 @@ class PortfolioRebalancer:
 
     selection_mode="pair" selects at most one losing leg per triplet.
     selection_mode="portfolio" selects every asset on the side with the
-    more negative aggregate unrealized P&L, including its individual winners.
+    more negative aggregate Open P&L, including its individual winners.
     No replacement occurs if neither eligible leg/side has a loss. Ties go
     to the long side. Every replacement uses the unused triplet member.
 
@@ -272,15 +272,15 @@ class PortfolioRebalancer:
     scheduled execution Open, even if no asset is replaced. Both constrained
     modes scale all positions together and may realize gains in retained
     positions. Price moves between events can exceed the limits. Costs are zero.
-    Signals use Close. Cancel a selected leg's replacement if its loss has
-    disappeared by the next Open; portfolio mode checks the selected side's
-    aggregate Open P&L and cancels the whole basket together.
+    Select losses again at execution Open: compare both current legs/sides,
+    replace the more negative one, and keep both when neither has a loss.
+    The preceding Close remains the cutoff for dynamic hedge coefficients.
     If no regular check can execute, use the final two trading dates.
     """
 
     HISTORY_COLUMNS = [
         "entry_date", "check_date", "anchor_A", "basket", "basket_after", "side", "ticker", "paired_ticker", "shares",
-        "cost_price", "price", "amount", "unrealized_pnl", "action",
+        "cost_price", "price", "amount", "unrealized_pnl", "open_price", "open_unrealized_pnl", "action",
         "replace_with", "shares_after", "realized_pnl",
     ]
 
@@ -422,6 +422,8 @@ class PortfolioRebalancer:
         snapshot["price"] = snapshot["ticker"].map(marks)
         snapshot["amount"] = snapshot["shares"] * snapshot["price"]
         snapshot["unrealized_pnl"] = snapshot["shares"] * (snapshot["price"] - snapshot["cost_price"])
+        snapshot["open_price"] = snapshot["ticker"].map(self.opens.loc[entry_date])
+        snapshot["open_unrealized_pnl"] = snapshot["shares"] * (snapshot["open_price"] - snapshot["cost_price"])
         snapshot["action"] = "hold"
         snapshot["replace_with"] = ""
         snapshot["basket_after"] = snapshot["basket"]
@@ -469,22 +471,20 @@ class PortfolioRebalancer:
         return pd.DataFrame(rows)
 
     def _replacements(self, snapshot, open_pnl):
-        """Confirm Close-selected losses at Open without selecting another leg."""
+        """Select the larger current loss at execution Open, per pair or side."""
         selected_side = None
         if self.selection_mode == "portfolio":
-            totals = snapshot.groupby("side")["unrealized_pnl"].sum().reindex(["long", "short"])
+            totals = open_pnl.groupby(snapshot["side"]).sum().reindex(["long", "short"])
             if totals.min() >= 0:
                 return {}
             selected_side = totals.idxmin()
-            if open_pnl.loc[snapshot["side"].eq(selected_side)].sum() >= 0:
-                return {}
         replacements = {}
         for anchor, group in snapshot.groupby("anchor_A", sort=False):
             if selected_side is not None:
                 selected = group.index[group["side"].eq(selected_side)][0]
             else:
-                selected = group["unrealized_pnl"].idxmin()
-                if snapshot.at[selected, "unrealized_pnl"] >= 0 or open_pnl.at[selected] >= 0:
+                selected = open_pnl.loc[group.index].idxmin()
+                if open_pnl.at[selected] >= 0:
                     continue
             kept = group.index[group.index != selected][0]
             ticker = next(t for t in self.members[anchor] if t not in group["ticker"].values)
@@ -507,7 +507,8 @@ class PortfolioRebalancer:
         """Return event-only history, trades, schedule and final holdings in memory.
 
         History starts with initial Open holdings. Other rows show pre-trade
-        holdings marked at check_date Close and their next-Open outcomes.
+        holdings marked at check_date Close, execution-Open P&L used for
+        loss selection, and their next-Open trading outcomes.
         entry_date is the event's execution date for every row, including
         retained assets. Actual position cost dates stay in final holdings.
         Each call starts again from the original supplied positions.
@@ -522,11 +523,11 @@ class PortfolioRebalancer:
             entry_date, check_date = event["entry_date"], event["check_date"]
             snapshot = self._snapshot(holdings, entry_date, check_date, self.closes.loc[check_date])
             next_open = self.opens.loc[entry_date]
-            open_pnl = holdings["shares"] * (holdings["ticker"].map(next_open) - holdings["cost_price"])
+            open_pnl = snapshot["open_unrealized_pnl"]
             replacements = self._replacements(snapshot, open_pnl)
             row = dict(event, replacements=len(replacements), scale=1.0)
-            row["long_pnl"] = snapshot.loc[snapshot["side"].eq("long"), "unrealized_pnl"].sum()
-            row["short_pnl"] = snapshot.loc[snapshot["side"].eq("short"), "unrealized_pnl"].sum()
+            row["long_pnl"] = open_pnl.loc[snapshot["side"].eq("long")].sum()
+            row["short_pnl"] = open_pnl.loc[snapshot["side"].eq("short")].sum()
             self._refresh_betas(check_date)
             planned = holdings.copy()
             for selected, (kept, ticker) in replacements.items():

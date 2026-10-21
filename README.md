@@ -127,7 +127,7 @@ Both constrained modes scale **all positions by the same factor**, then round sh
 
 ## Rebalancing and realized gains
 
-`rebalance_frequency=3` checks March, June and September month-end Closes and executes at the next available trading day's Open. If no regular check can execute in the sample, use the penultimate Close and final Open. Thus a 12-month setting can run on this incomplete-year sample; this fallback deliberately depends on the sample endpoint.
+`rebalance_frequency=3` uses March, June and September month-end Close cutoffs for hedge estimation and selects/trades at the next available trading day's Open. If no regular check can execute in the sample, use the penultimate Close and final Open. Thus a 12-month setting can run on this incomplete-year sample; this fallback deliberately depends on the sample endpoint.
 
 - `selection_mode="pair"`: replace only the losing leg in each currently held pair; if both lose, replace the larger dollar loss. Do nothing if neither loses.
 - `selection_mode="portfolio"`: compare aggregate long and short unrealized P&L, then replace the whole losing side with the larger loss. This includes individual winners on that side.
@@ -136,7 +136,9 @@ Use the currently unused asset within each original triplet, retaining the repla
 
 `entry_date` is the actual initial/rebalance execution date for all event rows. Pre-trade prices and unrealized P&L use `check_date` Close. `basket` identifies the actual pre-trade ticker's original A/B/C membership; `basket_after` identifies the resulting asset's membership. `shares_after` and `replace_with` describe the post-trade position. Full fills appear in `rebalance_result["trades"]`.
 
-Before executing a Close-selected replacement, confirm the loss at execution-day Open using signed shares times `(Open - cost_price)`. In pair mode, cancel that replacement if its Open P&L is zero or positive; retain the asset and do not select the other leg instead. In whole-portfolio mode, cancel the entire selected side if its aggregate Open P&L is zero or positive, preserving complete baskets. Open confirmation uses no execution-day Close. For example, BRK-B's June 30 Close loss becomes a gain at the July 1 Open with `rebalance_frequency=6`, so BRK-B is no longer replaced with FNF.
+At every scheduled execution Open, recalculate signed P&L as `shares * (Open - cost_price)` and select again from both current legs/sides. In pair mode, replace the asset with the larger dollar loss in each pair; if neither asset loses, keep both. In whole-portfolio mode, compare aggregate Open P&L of the entire long and short sides and replace the side with the larger loss; if neither side loses, keep both. The choice can switch from the prior Close's worse leg/side to the other one. A tie between losses selects long. Selection uses no execution-day Close. Dynamic hedge estimation still stops at the preceding Close.
+
+The history retains check-date Close prices/P&L and adds `open_price` and `open_unrealized_pnl` to show the actual selection basis. Schedule `long_pnl` and `short_pnl` also use execution Open. For example, with `rebalance_frequency=6`, BRK-B is profitable at the July 1 Open, so it is not replaced with FNF; if its paired short has a loss then, that short can be replaced instead.
 
 Exposure limits still apply independently. Scaling can trim profitable retained positions; these trades have `reason="strict_cap"`, and their gains remain in realized P&L. Whole-portfolio replacement can still close individual winners when the selected basket has an aggregate loss at Open.
 

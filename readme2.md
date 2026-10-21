@@ -239,9 +239,11 @@ s_AB(t) = V_A(t) - alpha_AB - beta_AB * V_B(t)
 
 `selection_mode="pair"` 每组只换亏损更大的一个标的；`selection_mode="portfolio"` 换掉总亏损更大的整侧，可能同时平掉该侧个别盈利资产。替换对象始终是该组三个标的中当前未持有的一个，保持一个 long、一个 short。
 
-`rebalance_frequency=3` 在季度末 Close 检查、下个交易日 Open 成交。若样本内没有可执行的正常调仓，则使用倒数第二日 Close 检查、最后一日 Open 成交。该回退规则是研究样本的简化安排。
+`rebalance_frequency=3` 以季度末 Close 为动态 beta 的回归截止点，在下个交易日 Open 重新比较亏损并成交。若样本内没有可执行的正常调仓，则使用倒数第二日 Close 作为回归截止点、最后一日 Open 选择并成交。该回退规则是研究样本的简化安排。
 
-前一天 Close 选出亏损仓位后，在调仓日 Open 再确认：用带符号股数乘以 `Open - cost_price`。pair 模式下，原选中资产若已不亏（盈亏大于或等于零），取消该笔替换，继续持有原资产，不改选另一条腿；portfolio 模式下，若原选中整侧的 Open 总盈亏已不为负，则整侧取消替换，保持完整篮子。该确认不使用调仓当天的 Close。例如 frequency=6 时，7 月 1 日 BRK-B 开盘已盈利，因此取消 BRK-B 换 FNF。
+每个预定调仓日按 Open 重新计算盈亏：带符号股数乘以 `Open - cost_price`。pair 模式重新比较每组当前两条腿，替换仍亏损且金额亏得更多的一个；两个都不亏就都保留。portfolio 模式重新比较整个 long 侧和 short 侧的 Open 总盈亏，替换亏得更多的一整侧；两侧都不亏就都保留。因此，即使前一天 B 亏得更多，只要调仓日 A 亏得更多，就改换 A。亏损相同则选择 long。选择不使用调仓当天的 Close，动态 beta 的回归截止日仍是前一天 Close。
+
+调仓表保留原有 Close 价格和浮动盈亏，新增 `open_price`、`open_unrealized_pnl` 显示实际选择依据；schedule 的 `long_pnl`、`short_pnl` 也按调仓日 Open 计算。例如 frequency=6 时，7 月 1 日 BRK-B 开盘已盈利，就不换成 FNF；若对应 short 当时亏损，则可以改换该 short。
 
 仓位上限仍独立执行；缩仓可以平掉盈利持仓，交易原因标记为 `strict_cap`。portfolio 模式整侧仍亏时，整侧替换也可能平掉其中个别盈利资产。这些盈利保留在统计中。
 
