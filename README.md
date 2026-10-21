@@ -136,7 +136,9 @@ Use the currently unused asset within each original triplet, retaining the repla
 
 `entry_date` is the actual initial/rebalance execution date for all event rows. Pre-trade prices and unrealized P&L use `check_date` Close. `basket` identifies the actual pre-trade ticker's original A/B/C membership; `basket_after` identifies the resulting asset's membership. `shares_after` and `replace_with` describe the post-trade position. Full fills appear in `rebalance_result["trades"]`.
 
-Exposure scaling can trim profitable retained positions. These trades have `reason="strict_cap"`, and their gains remain in realized P&L. A loss at check-day Close can also become a gain by next Open. Whole-portfolio replacement can close winning constituents. The loss-selection rule therefore does not guarantee zero realized gains.
+Before executing a Close-selected replacement, confirm the loss at execution-day Open using signed shares times `(Open - cost_price)`. In pair mode, cancel that replacement if its Open P&L is zero or positive; retain the asset and do not select the other leg instead. In whole-portfolio mode, cancel the entire selected side if its aggregate Open P&L is zero or positive, preserving complete baskets. Open confirmation uses no execution-day Close. For example, BRK-B's June 30 Close loss becomes a gain at the July 1 Open with `rebalance_frequency=6`, so BRK-B is no longer replaced with FNF.
+
+Exposure limits still apply independently. Scaling can trim profitable retained positions; these trades have `reason="strict_cap"`, and their gains remain in realized P&L. Whole-portfolio replacement can still close individual winners when the selected basket has an aggregate loss at Open.
 
 ## Daily P&L and the realized/unrealized identity
 

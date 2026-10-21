@@ -272,7 +272,9 @@ class PortfolioRebalancer:
     scheduled execution Open, even if no asset is replaced. Both constrained
     modes scale all positions together and may realize gains in retained
     positions. Price moves between events can exceed the limits. Costs are zero.
-    Signals use Close; fills use the next Open, even after a loss reversal.
+    Signals use Close. Cancel a selected leg's replacement if its loss has
+    disappeared by the next Open; portfolio mode checks the selected side's
+    aggregate Open P&L and cancels the whole basket together.
     If no regular check can execute, use the final two trading dates.
     """
 
@@ -466,20 +468,23 @@ class PortfolioRebalancer:
             raise ValueError("Whole-portfolio rotation must retain two complete, distinct baskets.")
         return pd.DataFrame(rows)
 
-    def _replacements(self, snapshot):
+    def _replacements(self, snapshot, open_pnl):
+        """Confirm Close-selected losses at Open without selecting another leg."""
         selected_side = None
         if self.selection_mode == "portfolio":
             totals = snapshot.groupby("side")["unrealized_pnl"].sum().reindex(["long", "short"])
             if totals.min() >= 0:
                 return {}
             selected_side = totals.idxmin()
+            if open_pnl.loc[snapshot["side"].eq(selected_side)].sum() >= 0:
+                return {}
         replacements = {}
         for anchor, group in snapshot.groupby("anchor_A", sort=False):
             if selected_side is not None:
                 selected = group.index[group["side"].eq(selected_side)][0]
             else:
                 selected = group["unrealized_pnl"].idxmin()
-                if snapshot.at[selected, "unrealized_pnl"] >= 0:
+                if snapshot.at[selected, "unrealized_pnl"] >= 0 or open_pnl.at[selected] >= 0:
                     continue
             kept = group.index[group.index != selected][0]
             ticker = next(t for t in self.members[anchor] if t not in group["ticker"].values)
@@ -516,11 +521,12 @@ class PortfolioRebalancer:
         for event in self._events():
             entry_date, check_date = event["entry_date"], event["check_date"]
             snapshot = self._snapshot(holdings, entry_date, check_date, self.closes.loc[check_date])
-            replacements = self._replacements(snapshot)
+            next_open = self.opens.loc[entry_date]
+            open_pnl = holdings["shares"] * (holdings["ticker"].map(next_open) - holdings["cost_price"])
+            replacements = self._replacements(snapshot, open_pnl)
             row = dict(event, replacements=len(replacements), scale=1.0)
             row["long_pnl"] = snapshot.loc[snapshot["side"].eq("long"), "unrealized_pnl"].sum()
             row["short_pnl"] = snapshot.loc[snapshot["side"].eq("short"), "unrealized_pnl"].sum()
-            next_open = self.opens.loc[entry_date]
             self._refresh_betas(check_date)
             planned = holdings.copy()
             for selected, (kept, ticker) in replacements.items():
