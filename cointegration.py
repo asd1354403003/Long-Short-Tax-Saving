@@ -1,4 +1,4 @@
-"""Cointegration class: ADF and explicit-OLS EG; dates belong to portfolio.py."""
+"""Cointegration class: ADF and explicit-OLS EG; dates belong to market_data.py."""
 from __future__ import annotations
 
 import inspect

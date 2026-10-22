@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from portfolio import CointegrationConfig, PortfolioBuilder, PortfolioConfig, YahooFinanceSource, _key
+from market_data import CointegrationConfig, PairAnalyzer, PairResearchConfig, YahooFinanceSource, _key
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,10 +68,10 @@ class PairPoolConfig:
             raise ValueError("Enable equities, ETFs or both.")
 
     def source_config(self):
-        return PortfolioConfig.from_relationship_file(
+        return PairResearchConfig.from_relationship_file(
             self.relationship_file, cointegration=self.cointegration,
-            min_correlation=self.min_correlation, batch_size=self.batch_size,
-            ab_confidence_level=self.confidence_level,
+            batch_size=self.batch_size,
+            confidence_level=self.confidence_level,
         )
 
 
@@ -194,11 +194,11 @@ class PairPoolBuilder:
     def __init__(self, config: PairPoolConfig | None = None, *, source=None):
         self.config = config or PairPoolConfig()
         self.source = source if source is not None else PairPoolSource(self.config)
-        self.legacy_config = self.config.source_config()
-        self.tester = PortfolioBuilder(self.legacy_config)
+        self.research_config = self.config.source_config()
+        self.tester = PairAnalyzer(self.research_config)
         self.related = {
             _key(industry): {_key(name) for name in names}
-            for industry, names in self.legacy_config.related_industries.items()
+            for industry, names in self.research_config.related_industries.items()
         }
         self.etf_related = {}
         if self.config.include_etfs:
@@ -286,7 +286,7 @@ class PairPoolBuilder:
             raise RuntimeError("Fewer than two assets passed formation liquidity/history screening.")
         assets = pd.DataFrame(assets).set_index("ticker", drop=False)
         # Retain the share class with the highest formation-period dollar volume.
-        for group in self.legacy_config.equivalent_ticker_groups + config.extra_equivalent_ticker_groups:
+        for group in self.research_config.equivalent_ticker_groups + config.extra_equivalent_ticker_groups:
             present = assets.index.intersection(group)
             if len(present) > 1:
                 keep = assets.loc[present, "average_dollar_volume"].idxmax()
