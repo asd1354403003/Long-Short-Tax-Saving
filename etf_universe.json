@@ -1,0 +1,1153 @@
+{
+  "as_of": "2026-10-22",
+  "scope": "Curated US-listed USD unlevered long ETFs and commodity exchange-traded funds/trusts/pools. No ETNs, leveraged/inverse funds or closed-end funds.",
+  "groups": [
+    {
+      "id": "gold_physical",
+      "label": "Gold bullion",
+      "tickers": [
+        "GLD",
+        "IAU",
+        "GLDM",
+        "SGOL",
+        "BAR",
+        "OUNZ",
+        "AAAU",
+        "IAUM"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "physical",
+      "tracking_pair_group": true,
+      "source_urls": [
+        "https://www.spdrgoldshares.com/usa/",
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities",
+        "https://graniteshares.com/etfs/comb/",
+        "https://www.vaneck.com/us/en/investments/merk-gold-trust-ounz/overview/",
+        "https://am.gs.com/en-us/advisors/strategies/etfs"
+      ]
+    },
+    {
+      "id": "silver_physical",
+      "label": "Silver bullion",
+      "tickers": [
+        "SLV",
+        "SIVR"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "physical",
+      "tracking_pair_group": true,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities"
+      ]
+    },
+    {
+      "id": "platinum_physical",
+      "label": "Platinum bullion",
+      "tickers": [
+        "PPLT",
+        "PLTM"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "physical",
+      "tracking_pair_group": true,
+      "source_urls": [
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities",
+        "https://graniteshares.com/etfs/comb/"
+      ]
+    },
+    {
+      "id": "palladium_physical",
+      "label": "Palladium bullion",
+      "tickers": [
+        "PALL"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "physical",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities"
+      ]
+    },
+    {
+      "id": "precious_basket_physical",
+      "label": "Precious-metals bullion basket",
+      "tickers": [
+        "GLTR"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "physical",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities"
+      ]
+    },
+    {
+      "id": "precious_futures",
+      "label": "Gold/silver futures basket",
+      "tickers": [
+        "DBP"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html"
+      ]
+    },
+    {
+      "id": "crude_oil_futures",
+      "label": "Crude-oil futures, including WTI/Brent and different roll schedules",
+      "tickers": [
+        "USO",
+        "USL",
+        "DBO",
+        "BNO"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.uscfinvestments.com/",
+        "https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html"
+      ]
+    },
+    {
+      "id": "energy_basket_futures",
+      "label": "Energy futures basket",
+      "tickers": [
+        "DBE"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html"
+      ]
+    },
+    {
+      "id": "natural_gas_futures",
+      "label": "Natural-gas futures",
+      "tickers": [
+        "UNG",
+        "UNL"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.uscfinvestments.com/"
+      ]
+    },
+    {
+      "id": "gasoline_futures",
+      "label": "Gasoline futures",
+      "tickers": [
+        "UGA"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.uscfinvestments.com/"
+      ]
+    },
+    {
+      "id": "copper_futures",
+      "label": "Copper futures",
+      "tickers": [
+        "CPER"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.uscfinvestments.com/"
+      ]
+    },
+    {
+      "id": "industrial_metals_futures",
+      "label": "Industrial-metals futures basket",
+      "tickers": [
+        "DBB"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html",
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities"
+      ]
+    },
+    {
+      "id": "battery_metals_futures",
+      "label": "Battery-metals futures strategy",
+      "tickers": [
+        "ZSB"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.uscfinvestments.com/"
+      ]
+    },
+    {
+      "id": "broad_commodity_futures",
+      "label": "Diversified commodity futures",
+      "tickers": [
+        "DBC",
+        "PDBC",
+        "BCI",
+        "BCD",
+        "COMT",
+        "CMDY",
+        "GSG",
+        "FTGC",
+        "USCI",
+        "SDCI",
+        "COMB",
+        "COM"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html",
+        "https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities",
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.uscfinvestments.com/",
+        "https://graniteshares.com/etfs/comb/",
+        "https://www.direxion.com/product/auspice-broad-commodity-strategy-etf",
+        "https://www.ftportfolios.com/Retail/Etf/EtfSummary.aspx?Ticker=FTGC"
+      ]
+    },
+    {
+      "id": "agriculture_basket_futures",
+      "label": "Agricultural futures basket",
+      "tickers": [
+        "DBA",
+        "PDBA",
+        "TAGS"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html",
+        "https://teucrium.com/TAGS"
+      ]
+    },
+    {
+      "id": "corn_futures",
+      "label": "Corn futures",
+      "tickers": [
+        "CORN"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://teucrium.com/TAGS"
+      ]
+    },
+    {
+      "id": "wheat_futures",
+      "label": "Wheat futures",
+      "tickers": [
+        "WEAT"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://teucrium.com/TAGS"
+      ]
+    },
+    {
+      "id": "soybean_futures",
+      "label": "Soybean futures",
+      "tickers": [
+        "SOYB"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://teucrium.com/TAGS"
+      ]
+    },
+    {
+      "id": "sugar_futures",
+      "label": "Sugar futures",
+      "tickers": [
+        "CANE"
+      ],
+      "pair_family": "commodity_etf",
+      "asset_class": "commodity",
+      "implementation": "futures",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://teucrium.com/TAGS"
+      ]
+    },
+    {
+      "id": "us_sp500",
+      "label": "US S&P 500",
+      "tickers": [
+        "SPY",
+        "IVV",
+        "VOO",
+        "SPYM"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": true,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "us_total_market",
+      "label": "US total stock market",
+      "tickers": [
+        "VTI",
+        "ITOT",
+        "SCHB",
+        "SPTM"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "us_large_cap",
+      "label": "US large-cap equities",
+      "tickers": [
+        "SCHX",
+        "VV"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "nasdaq100",
+      "label": "Nasdaq-100",
+      "tickers": [
+        "QQQ",
+        "QQQM"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": true,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products",
+        "https://www.invesco.com/us/en/financial-products/etfs.html"
+      ]
+    },
+    {
+      "id": "us_growth",
+      "label": "US growth equities",
+      "tickers": [
+        "VUG",
+        "SCHG",
+        "IWF",
+        "IVW",
+        "IUSG"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "us_value",
+      "label": "US value equities",
+      "tickers": [
+        "VTV",
+        "SCHV",
+        "IWD",
+        "IVE",
+        "IUSV"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "us_mid_cap",
+      "label": "US mid-cap equities",
+      "tickers": [
+        "IJH",
+        "VO",
+        "SCHM",
+        "MDY"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "us_small_cap",
+      "label": "US small-cap equities",
+      "tickers": [
+        "IWM",
+        "IJR",
+        "VB",
+        "SCHA",
+        "SPSM"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "international_developed",
+      "label": "Developed-market equities outside the US",
+      "tickers": [
+        "VEA",
+        "IEFA",
+        "EFA",
+        "SCHF"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "emerging_equity",
+      "label": "Emerging-market equities",
+      "tickers": [
+        "VWO",
+        "IEMG",
+        "EEM",
+        "SCHE"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "dividend_equity",
+      "label": "Dividend equities",
+      "tickers": [
+        "VIG",
+        "SCHD",
+        "DGRO",
+        "HDV",
+        "VYM"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "real_estate_equity",
+      "label": "Listed real-estate equities",
+      "tickers": [
+        "VNQ",
+        "IYR",
+        "SCHH",
+        "USRT"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "technology_equity",
+      "label": "Technology companies",
+      "tickers": [
+        "XLK",
+        "VGT",
+        "IYW",
+        "FTEC"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "financial_equity",
+      "label": "Financial companies",
+      "tickers": [
+        "XLF",
+        "VFH",
+        "IYF",
+        "FNCL"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "energy_equity",
+      "label": "Energy companies, not direct commodity futures",
+      "tickers": [
+        "XLE",
+        "VDE",
+        "IYE",
+        "FENY"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "semiconductor_equity",
+      "label": "Semiconductor companies",
+      "tickers": [
+        "SMH",
+        "SOXX",
+        "SOXQ"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products",
+        "https://www.vaneck.com/us/en/investments/etf/"
+      ]
+    },
+    {
+      "id": "healthcare_equity",
+      "label": "Healthcare companies",
+      "tickers": [
+        "XLV",
+        "VHT",
+        "IYH",
+        "FHLC"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "industrial_equity",
+      "label": "Industrial companies",
+      "tickers": [
+        "XLI",
+        "VIS",
+        "IYJ",
+        "FIDU"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "utilities_equity",
+      "label": "Utilities companies",
+      "tickers": [
+        "XLU",
+        "VPU",
+        "IDU",
+        "FUTY"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "consumer_discretionary_equity",
+      "label": "Consumer-discretionary companies",
+      "tickers": [
+        "XLY",
+        "VCR",
+        "IYC",
+        "FDIS"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "consumer_staples_equity",
+      "label": "Consumer-staples companies",
+      "tickers": [
+        "XLP",
+        "VDC",
+        "IYK",
+        "FSTA"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "materials_equity",
+      "label": "Materials companies",
+      "tickers": [
+        "XLB",
+        "VAW",
+        "IYM",
+        "FMAT"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "communication_equity",
+      "label": "Communication-services companies",
+      "tickers": [
+        "XLC",
+        "VOX",
+        "IYZ",
+        "FCOM"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "gold_miner_equity",
+      "label": "Gold-mining companies, not gold bullion",
+      "tickers": [
+        "GDX",
+        "GDXJ",
+        "RING",
+        "SGDM",
+        "SGDJ"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products",
+        "https://www.vaneck.com/us/en/investments/etf/",
+        "https://sprottetfs.com/"
+      ]
+    },
+    {
+      "id": "resource_equity",
+      "label": "Natural-resource companies",
+      "tickers": [
+        "GNR",
+        "GUNR",
+        "HAP",
+        "NANR"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "equity",
+      "implementation": "equities",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products",
+        "https://www.vaneck.com/us/en/investments/etf/"
+      ]
+    },
+    {
+      "id": "aggregate_bond",
+      "label": "US aggregate investment-grade bonds",
+      "tickers": [
+        "AGG",
+        "BND",
+        "SCHZ",
+        "SPAB"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "cash_treasury",
+      "label": "Cash-like Treasury exposure",
+      "tickers": [
+        "SGOV",
+        "BIL",
+        "SHV"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "short_treasury",
+      "label": "Short-duration Treasuries",
+      "tickers": [
+        "SHY",
+        "VGSH",
+        "SCHO",
+        "SPTS"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "intermediate_treasury",
+      "label": "Intermediate-duration Treasuries",
+      "tickers": [
+        "IEF",
+        "VGIT",
+        "SCHR",
+        "SPTI"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "long_treasury",
+      "label": "Long-duration Treasuries",
+      "tickers": [
+        "TLT",
+        "VGLT",
+        "SPTL"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "strips_treasury",
+      "label": "Long-duration Treasury STRIPS",
+      "tickers": [
+        "EDV",
+        "ZROZ"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "tips_bond",
+      "label": "Inflation-protected Treasuries",
+      "tickers": [
+        "TIP",
+        "SCHP"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "short_tips_bond",
+      "label": "Short-duration inflation-protected Treasuries",
+      "tickers": [
+        "VTIP",
+        "STIP"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "investment_grade_credit",
+      "label": "Investment-grade corporate bonds",
+      "tickers": [
+        "LQD",
+        "VCIT",
+        "IGIB",
+        "SPIB",
+        "USIG"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "short_investment_grade_credit",
+      "label": "Short-duration investment-grade corporate bonds",
+      "tickers": [
+        "VCSH",
+        "IGSB",
+        "SPSB"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "high_yield_credit",
+      "label": "High-yield corporate bonds",
+      "tickers": [
+        "HYG",
+        "JNK",
+        "USHY",
+        "SPHY"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "municipal_bond",
+      "label": "Municipal bonds",
+      "tickers": [
+        "MUB",
+        "VTEB",
+        "TFI"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "international_hedged_bond",
+      "label": "Currency-hedged international investment-grade bonds",
+      "tickers": [
+        "BNDX",
+        "IAGG"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    },
+    {
+      "id": "emerging_usd_bond",
+      "label": "USD-denominated emerging-market sovereign bonds",
+      "tickers": [
+        "EMB",
+        "VWOB",
+        "PCY"
+      ],
+      "pair_family": "other_etf",
+      "asset_class": "bond",
+      "implementation": "bonds",
+      "tracking_pair_group": false,
+      "source_urls": [
+        "https://www.ishares.com/us/products/etf-investments",
+        "https://www.ssga.com/us/en/individual/etfs",
+        "https://investor.vanguard.com/investment-products/list/etfs",
+        "https://www.schwabassetmanagement.com/products"
+      ]
+    }
+  ],
+  "related_groups": [
+    [
+      "gold_physical",
+      "silver_physical",
+      "platinum_physical",
+      "palladium_physical",
+      "precious_basket_physical",
+      "precious_futures"
+    ],
+    [
+      "crude_oil_futures",
+      "energy_basket_futures",
+      "natural_gas_futures",
+      "gasoline_futures"
+    ],
+    [
+      "copper_futures",
+      "industrial_metals_futures",
+      "battery_metals_futures"
+    ],
+    [
+      "agriculture_basket_futures",
+      "corn_futures",
+      "wheat_futures",
+      "soybean_futures",
+      "sugar_futures"
+    ],
+    [
+      "us_sp500",
+      "us_total_market",
+      "us_large_cap"
+    ],
+    [
+      "nasdaq100",
+      "us_growth"
+    ],
+    [
+      "short_treasury",
+      "intermediate_treasury",
+      "long_treasury",
+      "strips_treasury"
+    ],
+    [
+      "tips_bond",
+      "short_tips_bond"
+    ],
+    [
+      "investment_grade_credit",
+      "short_investment_grade_credit"
+    ]
+  ],
+  "notes": [
+    "Catalog membership is not statistical acceptance. History, current fund assets, formation liquidity and EG/ADF filters still apply.",
+    "Cash-like ETF Close series can be stationary; ETF I(1) checks exclude unsuitable price-level cointegration inputs.",
+    "Same-index/physical-metal tracking pairs are flagged. This does not establish tax eligibility or profitability after costs.",
+    "Commodity physical trusts, futures pools and investment-company ETFs may have different tax treatment. Tax modelling is not implemented.",
+    "SPYM is the current ticker for former SPLG; the issuer changed the ticker on 2025-10-31."
+  ],
+  "excluded_products": [
+    {
+      "ticker": "BCIM",
+      "reason": "Liquidated 2025-12-05; last trading date 2025-12-03. Excluded from the current ETF catalog.",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1597934/000199937125017271/abrdn-497_110525.htm"
+    }
+  ]
+}

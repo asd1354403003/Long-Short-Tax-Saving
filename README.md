@@ -1,19 +1,36 @@
 # Long-Short Tax Saving
 
-## Local V2: liquid pair candidate pool
+## Local V2: equity, commodity and diversified ETF pair pools
 
-Development is on local branch `research/pair-pool-v2`. Local annotated tag `abc-baseline-2026-10-22` preserves the A/B/C baseline at commit `9b60b46`. The local tag and development branch have not been pushed; GitHub main remains on the existing version.
+Development remains on local branch `research/pair-pool-v2`. GitHub tag `v1.0.0` preserves the A/B/C baseline at `9b60b46`; local tag `abc-baseline-2026-10-22` points to the same code. The new research branch is not pushed. The original A/B/C code, notebooks and their two CSVs remain available unchanged.
 
-Open `pair_pool.ipynb` to build the new pool with `PairPoolConfig` and `PairPoolBuilder` from `pair_pool.py`. This stage selects two-asset pairs without requiring a C substitute. It reuses the existing Yahoo downloader and Close-based EG/ADF implementation. The original `data.ipynb`, `analysis.ipynb` and their two CSVs retain their A/B/C workflow.
+Open `pair_pool.ipynb`. Its classes in `pair_pool.py` reuse the existing Yahoo downloader and Close-based EG/ADF implementation. The workflow writes only `data/pair_pool.csv`; it saves no intermediate CSV or price cache. A candidate requires two assets, without a third C substitute.
 
-The editable starting configuration targets up to **300 pairs**, from at most 1,000 US-listed USD equities. Both assets require a **USD 10 billion current market cap**, a **USD 5 formation-end price**, and **USD 20 million mean daily Close-times-Volume over the final 60 formation observations**. Known configured equivalent share classes are reduced to the more liquid formation-period class, including PBR/PBR-A and LEN/LEN-B in addition to the legacy groups. This is an explicit exclusion list, not a complete issuer-identity or tax-eligibility check. Same-industry and configured related-industry pairs are eligible. Correlation must exceed 0.90; EG uses 95% confidence and residual ADF uses -2.86, both at lag 1. No threshold is relaxed to fill the pool.
+### Equity and ETF coverage
 
-For an illustrative USD 100,000 long slot, each implied hedge order must be at most **0.5% of historical average daily dollar volume** in both trading directions, evaluated at formation-end prices. `reference_participation_y/x` report the worse of those directions. This is an order-size screening proxy, not a slippage estimate: actual execution prices, liquidity, costs and short availability still need to be checked when trading.
+- **Equities:** target up to 300 pairs among at most 1,000 US-listed USD equities. Both assets require current market cap >= USD 10 billion. Same-industry and configured related-industry pairs are tested. Known configured share classes, including PBR/PBR-A and LEN/LEN-B, are reduced to the more liquid formation-period class. The exclusion list is not a complete issuer-identity or tax-eligibility check.
+- **Commodity ETF/ETPs:** target up to 50 additional pairs. `etf_universe.json` includes 45 products spanning physical gold/silver/platinum/palladium, precious-metal baskets, crude oil/Brent, natural gas, gasoline, copper, industrial/battery metals, corn/wheat/soybeans/sugar, agricultural baskets and broad commodity strategies. Physical bullion and commodity futures are explicitly distinguished.
+- **Other ETFs:** target up to 50 additional pairs. The catalog also covers US/international indices, styles and sectors, mining/resource-company equities, real estate, Treasuries, inflation-linked, investment-grade, high-yield, municipal and international bonds. Mining and energy-company ETFs are equity exposures, not direct commodity exposure.
 
-Only the new final table `data/pair_pool.csv` is added. It stores tickers, industries, market-cap provenance, historical liquidity, Close OLS alpha/beta, formation spread mean/std and EG/ADF diagnostics. No caches or intermediate files are saved. A candidate pool may contain overlapping tickers; it is not 300 simultaneous positions. The future signal strategy should separately limit active pairs and aggregate ticker/industry risk.
+The curated catalog contains 189 US-listed USD products in 58 exposure groups. It excludes leveraged/inverse products, ETNs and closed-end funds. Same or explicitly related ETF groups can pair; stock/ETF and commodity/bond cross-pairs are not formed. Each ETF exposure-group combination is capped at five accepted pairs so near-identical index products do not consume all additions. `tracking_pair` flags catalogued same-index/physical-metal candidates; it does not establish tax eligibility or an economic trading edge.
 
-**Universe timing:** market caps and industry labels are current Yahoo snapshots, not reconstructed 2025 constituents. The universe can therefore have survivorship and selection bias. All formation regressions, correlations, liquidity and spread statistics use only 2022-2025 data; this stage fetches no 2026 prices. Candidate-pool formation is complete separately from a future z-score entry/exit backtest. The older A/B/C documentation below describes the preserved baseline.
+### Instrument-specific size and common liquidity filters
 
+ETFs use **AUM >= USD 100 million**, rather than the equity market-cap filter. Missing AUM does not get replaced by market cap. Both stocks and ETFs require a formation-end Close >= USD 5, one whole share within the reference budget, and **USD 20 million mean daily Close * Volume over the final 60 formation observations**.
+
+For a USD 100,000 reference long slot, each implied hedge order must be <= **0.5% of historical average daily dollar volume** in both directions at formation-end prices. `reference_participation_y/x` report the worse direction. These are screening estimates, not guaranteed fills or slippage estimates; execution Open prices, contemporary liquidity, spreads, costs and borrow availability need separate modelling.
+
+### Statistics, provenance and coverage diagnostics
+
+Correlation must exceed 0.90, EG uses 95% critical values, and residual ADF uses fixed -2.86. Both tests use lag 1 and autolag=None. ETF price levels must additionally support I(1): ADF does not reject at the level and rejects after first differencing. This avoids treating stationary cash-like ETF Close prices as price-level cointegration. The existing equity I(1) policy is unchanged. No threshold is relaxed to meet a family target.
+
+All correlation, regressions, liquidity, I(1) checks and spread mean/std use **2022-2025 only**. This stage downloads no 2026 prices. Market caps, fund AUM, classifications and catalog availability are current snapshots; their timestamps record metadata retrieval, not reconstructed 2025 constituents. Survivorship/selection bias remains. SPYM is the current ticker for former SPLG, effective 2025-10-31.
+
+The final pair CSV includes instrument type, family, exposure, implementation, issuer-reference URLs, size/AUM provenance, liquidity and OLS/EG/ADF diagnostics. The notebook separately displays every catalog group, including zero-acceptance groups, at metadata, size and formation-eligibility stages. Catalog coverage is not the same as having tradable accepted pairs in every category.
+
+Close-only modelling and omitted dividend cash flows are retained. ETF distributions and futures rolls can affect spreads. Physical trusts, futures pools and investment-company ETFs can have different tax treatment; the pipeline does not calculate tax or certify wash-sale/straddle treatment. Pool formation remains separate from the future z-score entry/exit strategy and active-position/ticker/exposure limits.
+
+Issuer references: [USCF commodity funds](https://www.uscfinvestments.com/), [Invesco commodity products](https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html), [Teucrium agriculture](https://teucrium.com/TAGS), [Aberdeen commodities](https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities). The catalog includes further issuer references for each group.
 
 Chinese project notes are preserved in [readme2.md](readme2.md).
 
