@@ -171,6 +171,8 @@ class PairSignalTrainer:
         output["exit_on_cross_mean"] = config.exit_on_cross_mean
         output["prevent_immediate_reentry"] = config.prevent_immediate_reentry
         output["selection_metric"] = "training_return_then_sharpe"
+        output = output.sort_values("validation_sharpe", ascending=False,
+                                    na_position="last", kind="stable").reset_index(drop=True)
         if save:
             path = Path(self.pool_config.output_file)
             path.parent.mkdir(parents=True, exist_ok=True)

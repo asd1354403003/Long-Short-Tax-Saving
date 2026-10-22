@@ -38,7 +38,7 @@ Z 测试 0.25 至 3.5、间隔 0.25，共 14 个。默认与原来相同 `exit_o
 
 2025 从空仓开始，可用训练最后一天 Close 作首个信号；训练 alpha/beta、mu_e、sigma_eq 和 Z 全部冻结。validation_passed 要求训练盈亏/Sharpe 为正，2025 至少两笔完整交易且盈亏/Sharpe 为正。未通过也保留在同一 CSV 并写原因，不保证未来盈利。
 
-最终 CSV 保存 entry_z、exit_z、训练 OU 参数、训练/验证盈亏、预算收益、Sharpe、回撤、笔数、胜率、退出类型数量和状态。原 alpha/beta 为验证前模型，train_alpha/train_beta 明确模拟系数。另以 2022–2025 重估 refit_* 回归及尺度，供未来 2026 使用，并记录 refit_status；它们不改变验证结果或 Z 选择。2026 完全不进入训练或筛选，全流程只保存这一份最终 CSV。
+最终 CSV 保存 entry_z、exit_z、训练 OU 参数、训练/验证盈亏、预算收益、Sharpe、回撤、笔数、胜率、退出类型数量和状态。CSV 及 Notebook 按 2025 validation_sharpe 从高到低排序，缺失值放最后；排序不改变训练选参逻辑。原 alpha/beta 为验证前模型，train_alpha/train_beta 明确模拟系数。另以 2022–2025 重估 refit_* 回归及尺度，供未来 2026 使用，并记录 refit_status；它们不改变验证结果或 Z 选择。2026 完全不进入训练或筛选，全流程只保存这一份最终 CSV。
 
 发行人资料：[USCF](https://www.uscfinvestments.com/)、[Invesco](https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html)、[Teucrium](https://teucrium.com/TAGS)、[Aberdeen](https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities)。目录中还保留各组的发行人参考入口。
 
