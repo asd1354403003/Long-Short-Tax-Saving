@@ -4,7 +4,7 @@
 
 开发分支仍为本地 `research/pair-pool-v2`。GitHub 的 `v1.0.0` 和本地 `abc-baseline-2026-10-22` 都保留旧 A/B/C 基线 `9b60b46`。新分支暂不推送；原 A/B/C 代码、Notebook 和两份 CSV 保留原样。
 
-新入口为 `pair_pool.ipynb`，类在 `pair_pool.py`。只更新最终表 `data/pair_pool.csv`，不保存中间 CSV 或价格缓存。候选只需两个资产，不要求 C。
+新入口为 `pair_pool.ipynb`，筛选类在 `pair_pool.py`，参数训练类 `PairSignalTrainer` 和配置类 `SignalTrainingConfig` 在 `pair_training.py`。只更新最终表 `data/pair_pool.csv`，不保存中间 CSV 或价格缓存。候选只需两个资产，不要求 C。
 
 股票目标最多 300 组，最多筛选 1,000 个美股上市、美元报价的股票，两边当前市值至少 100 亿美元。同业及配置的相关行业可以配对；已配置的同发行人股类保留训练期成交额较高的一个，包括补充的 PBR/PBR-A、LEN/LEN-B。此名单不代表完整的发行人身份或税务资格核验。
 
@@ -18,13 +18,31 @@ ETF 使用当前 AUM 至少 1 亿美元作为规模门槛，不使用股票市�
 
 仍使用 Close，相关系数大于 0.90、EG 95% 临界值、残差 ADF 固定 -2.86，两个检验固定 lag 1。ETF 额外要求价格水平支持 I(1)：水平 ADF 不拒绝、差分 ADF 拒绝，避免把现金类 ETF 的平稳 Close 当作价格协整。股票既有 I(1) 配置不变。不能凑满的目标留空，不降低阈值补数。
 
-相关性、回归、价差、I(1) 与历史流动性只用 2022–2025；本阶段不下载 2026 价格。当前市值/AUM、分类及目录不是 2025 年末历史成分，仍有幸存者和筛选偏差；时间戳为元数据取得时间。SPYM 是 SPLG 在 2025-10-31 改名后的代码。
+候选筛选、相关性、回归、价差、I(1) 与历史流动性改为只用 2022–2024；参数也在该期训练，2025 独立验证，不下载 2026 价格。当前市值/AUM、分类及目录不是 2025 年末历史成分，仍有幸存者和筛选偏差；时间戳为元数据取得时间。SPYM 是 SPLG 在 2025-10-31 改名后的代码。
 
 最终表保存资产类型、候选家族、敞口、实现方式、发行人参考链接、规模/AUM 时间、流动性与统计结果。Notebook 的 ETF 覆盖表会保留零入选品类，分别展示目录、元数据、规模、训练期合格数量与涉及的入选 pair。目录全面不等于每类都一定有合格交易。
 
-继续沿用只看 Close、暂不计分红现金流的假设；ETF 分配和期货移仓可能影响价差。现货信托、商品期货池及投资公司 ETF 的税务结构可能不同，当前不计算实际税款，也不自动判定 wash sale/straddle。候选池与后续 z-score 开平仓、实际持仓及 ticker/行业/敞口限额分开。
+继续沿用只看 Close、暂不计分红现金流的假设；ETF 分配和期货移仓可能影响价差。现货信托、商品期货池及投资公司 ETF 的税务结构可能不同，当前不计算实际税款，也不自动判定 wash sale/straddle。本版已加入单个 pair 的 z-score 开平仓验证；组合实际持仓及 ticker/行业/敞口限额仍属后续阶段。
+
+### 沿用原 single-Z 方法训练与验证
+
+训练类在 `pair_training.py`，Notebook 仅配置、调用和展示。先重新按 2022–2024 筛 pair，2025 单独验证；本版不设滚动窗口，也不保存 window 列。
+
+沿用 `TS_implement.ipynb` 和 `TS_lib.PairTraderSingleZ` 的 `mean_square` 计算。训练期价差拟合 `e_t=C+B*e_(t-1)+噪声`，要求 `0<B<1`。`tau=1/252`，`theta=-log(B)/tau`，`mu_e=C/(1-B)`，`sigma_eq=sqrt(mean(e**2)*tau/(1-exp(-2*theta*tau)))`。这里明确保留原来的价差二阶矩公式，不改成创新项方差。z-score 为 `(e-mu_e)/sigma_eq`，均值和尺度在验证期间固定。
+
+Z 测试 0.25 至 3.5、间隔 0.25，共 14 个。默认与原来相同 `exit_on_cross_mean=False`，平仓门槛为 Z/2，不独立训练 exit_z。至少完成 5 笔训练交易，按训练累计预算收益最大选 Z，Sharpe 作第二排序。训练结果是样本内。2025 不参与调参，也不使用后来的 refit 系数。
+
+高 z 做空 Y/做多 X，低 z 反向。Close 发信号，下一共同交易日 Open 成交；回到或穿过平仓门槛即退出。沿用 12% 单笔止损：Close 时以该笔初始总敞口计算亏损率，触发后下一 Open 退出，跳空可超过阈值。实际退出当天不再生成新开仓信号。保留原信号方法，但盈亏账本采用整数股及实际 Open/Close，而非照搬旧单位收益算法。
+
+每组固定预算 20 万美元，开仓时统一缩放使每条腿不超过 10 万美元，再向下取整；持有期间股数固定。现金加有符号市值计算 NAV 和每日盈亏，含隔夜跳空。每日收益为 P&L/固定预算，累计收益为总 P&L/预算，不能将这种每日收益连乘。Sharpe 包含空仓日、按 252 日年化、无风险利率零；回撤包含闲置现金。每期最后一天 Close 强制平仓，forced_exits 单列；stop_exits 记录止损。交易费、借券、融资、分红现金流仍不计，各组独立结果不能当作一个账户直接相加。
+
+2025 从空仓开始，可用训练最后一天 Close 作首个信号；训练 alpha/beta、mu_e、sigma_eq 和 Z 全部冻结。validation_passed 要求训练盈亏/Sharpe 为正，2025 至少两笔完整交易且盈亏/Sharpe 为正。未通过也保留在同一 CSV 并写原因，不保证未来盈利。
+
+最终 CSV 保存 entry_z、exit_z、训练 OU 参数、训练/验证盈亏、预算收益、Sharpe、回撤、笔数、胜率、退出类型数量和状态。原 alpha/beta 为验证前模型，train_alpha/train_beta 明确模拟系数。另以 2022–2025 重估 refit_* 回归及尺度，供未来 2026 使用，并记录 refit_status；它们不改变验证结果或 Z 选择。2026 完全不进入训练或筛选，全流程只保存这一份最终 CSV。
 
 发行人资料：[USCF](https://www.uscfinvestments.com/)、[Invesco](https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html)、[Teucrium](https://teucrium.com/TAGS)、[Aberdeen](https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities)。目录中还保留各组的发行人参考入口。
+
+## V1 A/B/C 基线
 
 本项目研究：能否利用 long–short 投资组合，在控制投资风险和交易成本的同时，通过实现亏损、替换持仓及递延盈利，改善投资者的税后收益。
 

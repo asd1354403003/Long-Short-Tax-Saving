@@ -4,7 +4,7 @@
 
 Development remains on local branch `research/pair-pool-v2`. GitHub tag `v1.0.0` preserves the A/B/C baseline at `9b60b46`; local tag `abc-baseline-2026-10-22` points to the same code. The new research branch is not pushed. The original A/B/C code, notebooks and their two CSVs remain available unchanged.
 
-Open `pair_pool.ipynb`. Its classes in `pair_pool.py` reuse the existing Yahoo downloader and Close-based EG/ADF implementation. The workflow writes only `data/pair_pool.csv`; it saves no intermediate CSV or price cache. A candidate requires two assets, without a third C substitute.
+Open `pair_pool.ipynb`. Its screening classes in `pair_pool.py` reuse the existing Yahoo downloader and Close-based EG/ADF implementation. `PairSignalTrainer` and `SignalTrainingConfig` in `pair_training.py` handle parameter training and validation. The workflow writes only `data/pair_pool.csv`; it saves no intermediate CSV or price cache. A candidate requires two assets, without a third C substitute.
 
 ### Equity and ETF coverage
 
@@ -24,17 +24,33 @@ For a USD 100,000 reference long slot, each implied hedge order must be <= **0.5
 
 Correlation must exceed 0.90, EG uses 95% critical values, and residual ADF uses fixed -2.86. Both tests use lag 1 and autolag=None. ETF price levels must additionally support I(1): ADF does not reject at the level and rejects after first differencing. This avoids treating stationary cash-like ETF Close prices as price-level cointegration. The existing equity I(1) policy is unchanged. No threshold is relaxed to meet a family target.
 
-All correlation, regressions, liquidity, I(1) checks and spread mean/std use **2022-2025 only**. This stage downloads no 2026 prices. Market caps, fund AUM, classifications and catalog availability are current snapshots; their timestamps record metadata retrieval, not reconstructed 2025 constituents. Survivorship/selection bias remains. SPYM is the current ticker for former SPLG, effective 2025-10-31.
+Candidate screening, correlation, regressions, liquidity, I(1) checks and spread mean/std use **2022-2024 only**. Signal parameters are trained in that same period and validated in **2025**. This stage downloads no 2026 prices. Market caps, fund AUM, classifications and catalog availability are current snapshots; their timestamps record metadata retrieval, not reconstructed 2025 constituents. Survivorship/selection bias remains. SPYM is the current ticker for former SPLG, effective 2025-10-31.
 
 The final pair CSV includes instrument type, family, exposure, implementation, issuer-reference URLs, size/AUM provenance, liquidity and OLS/EG/ADF diagnostics. The notebook separately displays every catalog group, including zero-acceptance groups, at metadata, size and formation-eligibility stages. Catalog coverage is not the same as having tradable accepted pairs in every category.
 
-Close-only modelling and omitted dividend cash flows are retained. ETF distributions and futures rolls can affect spreads. Physical trusts, futures pools and investment-company ETFs can have different tax treatment; the pipeline does not calculate tax or certify wash-sale/straddle treatment. Pool formation remains separate from the future z-score entry/exit strategy and active-position/ticker/exposure limits.
+Close-only modelling and omitted dividend cash flows are retained. ETF distributions and futures rolls can affect spreads. Physical trusts, futures pools and investment-company ETFs can have different tax treatment; the pipeline does not calculate tax or certify wash-sale/straddle treatment. Individual pair signal validation is implemented below; combined active-position/ticker/exposure limits remain future work.
+
+### Original single-Z method: training and independent validation
+
+`PairSignalTrainer` and `SignalTrainingConfig` live in `pair_training.py`. `run()` rebuilds candidates through 2024 before training. `train()` rejects input pairs formed after that cutoff. **No rolling window is fitted or used.**
+
+Match the original `TS_implement.ipynb` and `TS_lib.PairTraderSingleZ(sigma_mode="mean_square")` scaling. Fit the training residual AR(1), `e_t = C + B*e_(t-1) + innovation`, requiring `0 < B < 1`. With `tau=1/252`, set `theta=-log(B)/tau`, `mu_e=C/(1-B)`, and `sigma_eq=sqrt(mean(e**2)*tau/(1-exp(-2*theta*tau)))`. The numerator intentionally preserves the legacy spread second moment rather than replacing it with innovation variance. The fixed standardized signal is `(e-mu_e)/sigma_eq`.
+
+Search 14 entry thresholds, Z=0.25 to 3.50 in steps of 0.25. The default `exit_on_cross_mean=False` couples `exit_z=entry_z/2`; it is not an independent exit search. Rank eligible choices by **training cumulative budget return first, Sharpe second**, as in the original auto-report, with at least five completed trades. Training performance is in-sample. Neither validation data nor the later model refit choose the threshold.
+
+Evaluate the frozen training alpha/beta, mu_e, sigma_eq and selected Z once during 2025, starting flat. The last training Close may provide the first validation signal. High z shorts Y and longs X; low z reverses the direction. Close signals trade at the next common trading day's Open. Exit on returning to or crossing the signed exit threshold, including jumps across zero. The default 12% stop is monitored at Close on trade P&L divided by its entry gross exposure and executed at next Open; gaps can exceed the threshold. A trade exit suppresses a new entry signal on that execution day. The legacy signal rules are retained, while accounting uses integer shares and actual Open/Close fills rather than copying the old unit-return ledger.
+
+Each pair is independently simulated with a fixed USD 200,000 budget (`2 * long_amount`). A common entry scale caps both legs at USD 100,000 before whole-share rounding; shares stay fixed until exit. Cash plus signed positions determines NAV/P&L, including overnight moves. Daily returns are P&L divided by the fixed budget. Cumulative return is total P&L/budget, not the product of those daily budget returns. Sharpe includes idle days, annualizes with 252 observations and assumes zero risk-free rate; drawdown includes unused cash. Close remaining trades at the final Close of each evaluation period. Trade counts include scheduled exits, separately identified by `forced_exits`; `stop_exits` reports stop-driven closures. Costs, borrow, financing and dividend cash flows remain excluded. Overlapping independent pair results are not one combined account.
+
+`validation_passed` requires positive training P&L/Sharpe, at least two validation round trips and positive validation P&L/Sharpe. Rejected rows and reasons remain in the same CSV. This is a selection rule, not a profitability guarantee. The CSV saves `entry_z`, `exit_z`, training OU estimates, training/validation P&L, budget return, Sharpe, drawdown, trade count, win rate, exit counts, observations and status. There is no `window` column in this version.
+
+The original pool `alpha`/`beta` remain pre-validation formation estimates; `train_alpha`/`train_beta` explicitly identify the simulation model. Separate `refit_*` regression and scale estimates use 2022-2025 for possible future 2026 deployment; check `refit_status` before using them. They are calculated after validation and do not alter validation results or the selected Z. No 2026 observations enter fitting or selection. Only `data/pair_pool.csv` is written.
 
 Issuer references: [USCF commodity funds](https://www.uscfinvestments.com/), [Invesco commodity products](https://www.invesco.com/us/en/solutions/invesco-etfs/commodity-investing.html), [Teucrium agriculture](https://teucrium.com/TAGS), [Aberdeen commodities](https://www.aberdeeninvestments.com/en-us/institutional/investment-solutions/commodities). The catalog includes further issuer references for each group.
 
 Chinese project notes are preserved in [readme2.md](readme2.md).
 
-## Purpose and scope
+## V1 A/B/C baseline: purpose and scope
 
 Study whether realizing losses and rotating cointegrated long/short positions can improve after-tax outcomes while maintaining related investment exposure. First construct three candidate groups, A, B and C, using 2022-2025 formation data. Start long A / short B in 2026 and use the currently unused asset in each triplet as a replacement.
 

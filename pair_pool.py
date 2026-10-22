@@ -43,7 +43,8 @@ class PairPoolConfig:
     extra_equivalent_ticker_groups: tuple[tuple[str, ...], ...] = (
         ("PBR", "PBR-A"), ("LEN", "LEN-B"),
     )
-    cointegration: CointegrationConfig = field(default_factory=CointegrationConfig)
+    cointegration: CointegrationConfig = field(
+        default_factory=lambda: CointegrationConfig(train_end="2024-12-31"))
     relationship_file: Path = Path("industry_relationships.json")
     etf_catalog_file: Path = Path("etf_universe.json")
     output_file: Path = Path("data/pair_pool.csv")
