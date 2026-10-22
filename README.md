@@ -1,5 +1,20 @@
 # Long-Short Tax Saving
 
+## Local V2: liquid pair candidate pool
+
+Development is on local branch `research/pair-pool-v2`. Local annotated tag `abc-baseline-2026-10-22` preserves the A/B/C baseline at commit `9b60b46`. The local tag and development branch have not been pushed; GitHub main remains on the existing version.
+
+Open `pair_pool.ipynb` to build the new pool with `PairPoolConfig` and `PairPoolBuilder` from `pair_pool.py`. This stage selects two-asset pairs without requiring a C substitute. It reuses the existing Yahoo downloader and Close-based EG/ADF implementation. The original `data.ipynb`, `analysis.ipynb` and their two CSVs retain their A/B/C workflow.
+
+The editable starting configuration targets up to **300 pairs**, from at most 1,000 US-listed USD equities. Both assets require a **USD 10 billion current market cap**, a **USD 5 formation-end price**, and **USD 20 million mean daily Close-times-Volume over the final 60 formation observations**. Known configured equivalent share classes are reduced to the more liquid formation-period class, including PBR/PBR-A and LEN/LEN-B in addition to the legacy groups. This is an explicit exclusion list, not a complete issuer-identity or tax-eligibility check. Same-industry and configured related-industry pairs are eligible. Correlation must exceed 0.90; EG uses 95% confidence and residual ADF uses -2.86, both at lag 1. No threshold is relaxed to fill the pool.
+
+For an illustrative USD 100,000 long slot, each implied hedge order must be at most **0.5% of historical average daily dollar volume** in both trading directions, evaluated at formation-end prices. `reference_participation_y/x` report the worse of those directions. This is an order-size screening proxy, not a slippage estimate: actual execution prices, liquidity, costs and short availability still need to be checked when trading.
+
+Only the new final table `data/pair_pool.csv` is added. It stores tickers, industries, market-cap provenance, historical liquidity, Close OLS alpha/beta, formation spread mean/std and EG/ADF diagnostics. No caches or intermediate files are saved. A candidate pool may contain overlapping tickers; it is not 300 simultaneous positions. The future signal strategy should separately limit active pairs and aggregate ticker/industry risk.
+
+**Universe timing:** market caps and industry labels are current Yahoo snapshots, not reconstructed 2025 constituents. The universe can therefore have survivorship and selection bias. All formation regressions, correlations, liquidity and spread statistics use only 2022-2025 data; this stage fetches no 2026 prices. Candidate-pool formation is complete separately from a future z-score entry/exit backtest. The older A/B/C documentation below describes the preserved baseline.
+
+
 Chinese project notes are preserved in [readme2.md](readme2.md).
 
 ## Purpose and scope
