@@ -1,4 +1,4 @@
-"""Trade a ranked, frozen pair pool with finite slots and no pair reuse."""
+"""Trade a ranked, frozen pair pool with finite slots and repeat entries."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -40,7 +40,7 @@ class PairBacktestConfig:
 class PairPoolBacktester:
     """Scan validation-Sharpe ranks; trade Close signals at the next Open.
 
-    Each pair trades once. Models are frozen through 2025. At entry a common
+    Closed pairs return to eligibility. Models are frozen through 2025. At entry a common
     strict_one_leg scale caps both legs, followed by whole-share rounding.
     Shares stay fixed until the pair closes. Unfilled slots remain in cash.
     """
@@ -100,7 +100,8 @@ class PairPoolBacktester:
         tickers, shares = (state["y"], state["x"]), (state["qy"], state["qx"])
         entry = (state["entry_y"], state["entry_x"])
         return {"execution_date": date, "signal_date": signal_date, "event": event,
-                "pair_id": state["pair_id"], "rank": state["rank"], "entry_date": state["entry_date"],
+                "trade_id": state["trade_id"], "pair_id": state["pair_id"],
+                "rank": state["rank"], "entry_date": state["entry_date"],
                 "long_ticker": tickers[positive], "short_ticker": tickers[negative],
                 "long_shares": shares[positive], "short_shares": shares[negative],
                 "long_price": prices[positive], "short_price": prices[negative],
@@ -139,11 +140,13 @@ class PairPoolBacktester:
             closing[m["y_ticker"]] - m["refit_alpha"] - m["refit_beta"] * closing[m["x_ticker"]]
             - m["refit_mu_e"]) / m["refit_sigma_eq"] for m in models})
 
-        def scan(date, used):
+        def scan(date, active, exited_today):
             entries = []
             for model in models:
                 pid = model["pair_id"]
-                if pid in used:
+                if pid in active:
+                    continue
+                if pid in exited_today and model.get("prevent_immediate_reentry", True):
                     continue
                 value = z_scores.at[date, pid]
                 if np.isfinite(value) and abs(value) > model["entry_z"]:
@@ -152,15 +155,17 @@ class PairPoolBacktester:
 
         long_positions = pd.DataFrame(0.0, index=dates, columns=tickers)
         short_positions = long_positions.copy()
-        active, used, pending_exits = {}, set(), {}
+        active, traded_pairs, pending_exits = {}, set(), {}
+        entry_count = 0
         previous = all_dates[all_dates < dates[0]]
-        pending_entries = scan(previous[-1], used) if len(previous) else []
+        pending_entries = scan(previous[-1], active, set()) if len(previous) else []
         cash = {"long": config.long_amount, "short": config.long_amount}
         previous_nav = cash.copy()
         realized_gain = realized_loss = 0.0
         events, snapshots, summaries = [], [], []
         for date in dates:
             day_gain = day_loss = 0.0
+            exited_today = set()
             for pid in list(pending_exits):
                 state = active[pid]
                 prices = opening.loc[date, [state["y"], state["x"]]].to_numpy(dtype=float)
@@ -176,12 +181,13 @@ class PairPoolBacktester:
                     day_loss += min(pnl, 0)
                 events.append(self._event(state, date, signal_date, "close", prices, reason, pnls))
                 del active[pid]
+                exited_today.add(pid)
             for pid, direction, signal_date in pending_entries:
                 if len(active) >= config.max_pairs:
                     break
                 model = by_id[pid]
                 y, x = model["y_ticker"], model["x_ticker"]
-                if pid in used:
+                if pid in active:
                     continue
                 occupied = {t for state in active.values() for t in (state["y"], state["x"])}
                 if not config.allow_shared_tickers and ({y, x} & occupied):
@@ -192,14 +198,16 @@ class PairPoolBacktester:
                 qy, qx = self.size_pair(*prices, model["refit_beta"], config.leg_cap, direction)
                 if not qy or not qx:
                     continue
-                state = {"pair_id": pid, "rank": model["rank"], "y": y, "x": x, "qy": qy, "qx": qx,
+                entry_count += 1
+                state = {"trade_id": entry_count, "pair_id": pid, "rank": model["rank"],
+                         "y": y, "x": x, "qy": qy, "qx": qx,
                          "entry_y": prices[0], "entry_x": prices[1], "mark_y": prices[0], "mark_x": prices[1],
                          "entry_date": date, "beta": model["refit_beta"],
                          "entry_gross": abs(qy) * prices[0] + abs(qx) * prices[1]}
                 for q, price in zip((qy, qx), prices):
                     cash["long" if q > 0 else "short"] -= q * price
                 active[pid] = state
-                used.add(pid)
+                traded_pairs.add(pid)
                 events.append(self._event(state, date, signal_date, "open", prices, "z_entry"))
             realized_gain += day_gain
             realized_loss += day_loss
@@ -217,7 +225,8 @@ class PairPoolBacktester:
                 pair_pnl = state["qy"] * (marks[0] - state["entry_y"]) + state["qx"] * (marks[1] - state["entry_x"])
                 unrealized += pair_pnl
                 snapshot = self._event(state, date, pd.NaT, "hold", marks, "")
-                snapshot.update(Date=date, unrealized_pnl=pair_pnl, z_score=z_scores.at[date, pid])
+                snapshot.update(Date=date, unrealized_pnl=pair_pnl, z_score=z_scores.at[date, pid],
+                                holding_days=(date - state["entry_date"]).days)
                 snapshots.append(snapshot)
                 for ticker, q, mark in zip((state["y"], state["x"]), (state["qy"], state["qx"]), marks):
                     if q > 0:
@@ -240,8 +249,10 @@ class PairPoolBacktester:
             cumulative_pnl = equity - 2 * config.long_amount
             if not np.isclose(cumulative_pnl, realized_gain + realized_loss + unrealized, atol=1e-6):
                 raise ArithmeticError("Cash/position accounting does not reconcile with realized and unrealized P&L.")
-            summaries.append({"Date": date, "active_pairs": len(active), "used_pairs": len(used),
-                "unused_pairs": len(models) - len(used),
+            summaries.append({"Date": date, "active_pairs": len(active), "entry_count": entry_count,
+                "traded_pairs": len(traded_pairs),
+                "available_pairs": len(models) - len(active) - sum(
+                    bool(by_id[pid].get("prevent_immediate_reentry", True)) for pid in exited_today),
                 "long_amount": day_long, "short_amount": day_short, "gross_amount": day_long - day_short,
                 "net_amount": day_long + day_short, "cash": cash["long"] + cash["short"], "equity": equity,
                 "long_pnl": long_pnl, "short_pnl": short_pnl, "daily_pnl": long_pnl + short_pnl,
@@ -253,25 +264,36 @@ class PairPoolBacktester:
                 "cumulative_realized_pnl": realized_gain + realized_loss, "unrealized_pnl": unrealized,
                 "stale_price_legs": stale_legs})
             previous_nav = {"long": nav_long, "short": nav_short}
-            # Re-scan every Close; only unused, signalled pairs can fill the next Open.
-            pending_entries = scan(date, used)
+            # Restart at the highest rank each Close; past trades do not blacklist a pair.
+            pending_entries = scan(date, active, exited_today)
         daily = pd.DataFrame(summaries).set_index("Date")
         daily["spy_close"] = spy.Close.reindex(dates)
         daily["spy_return"] = daily.spy_close.pct_change(fill_method=None)
         first_open = spy.at[dates[0], "Open"]
         daily.loc[dates[0], "spy_return"] = daily.spy_close.iloc[0] / first_open - 1
         daily["spy_cumulative_return"] = daily.spy_close / first_open - 1
-        event_columns = list(self._event({"qy": 1, "qx": -1, "y": "", "x": "", "entry_y": 0,
+        event_columns = list(self._event({"trade_id": 0, "qy": 1, "qx": -1, "y": "", "x": "", "entry_y": 0,
             "entry_x": 0, "pair_id": "", "rank": 0, "entry_date": pd.NaT, "beta": 1},
             pd.NaT, pd.NaT, "", (0, 0), ""))
         event_frame = pd.DataFrame(events, columns=event_columns)
-        position_frame = pd.DataFrame(snapshots, columns=event_columns + ["Date", "unrealized_pnl", "z_score"])
+        position_frame = pd.DataFrame(snapshots, columns=event_columns + ["Date", "unrealized_pnl", "z_score", "holding_days"])
         open_positions = position_frame.loc[position_frame.Date.eq(dates[-1])].sort_values("rank")
+        closed_trades = event_frame.loc[event_frame.event.eq("close")].copy()
+        realized = closed_trades.groupby("pair_id").agg(
+            closed_trades=("trade_id", "size"), realized_pnl=("realized_pnl", "sum"))
+        unrealized = open_positions.set_index("pair_id")[["unrealized_pnl", "holding_days"]]
+        performance = realized.join(unrealized, how="outer").fillna(0)
+        performance["total_pnl"] = performance.realized_pnl + performance.unrealized_pnl
+        performance = performance.join(self.pairs.set_index("pair_id")[["rank", "validation_sharpe"]])
+        performance = performance.sort_values("total_pnl")
+        if not np.isclose(performance.total_pnl.sum(), daily.cumulative_pnl.iloc[-1], atol=1e-6):
+            raise ArithmeticError("Pair-level contributions do not reconcile with account P&L.")
         for frame in (long_positions, short_positions):
             frame.index.name, frame.columns.name = "Date", "ticker"
         return {"daily_summary": daily, "daily_positions_long": long_positions,
                 "daily_positions_short": short_positions, "pair_positions": position_frame,
-                "events": event_frame, "closed_trades": event_frame.loc[event_frame.event.eq("close")].copy(),
+                "events": event_frame, "closed_trades": closed_trades,
+                "pair_performance": performance,
                 "open_positions": open_positions, "ranked_pairs": self.pairs,
                 "z_scores": z_scores.reindex(dates), "pending_exits": pending_exits,
                 "missing_tickers": [t for t in tickers if clean[t].dropna(how="all").empty],
