@@ -1,6 +1,13 @@
 {
   "method": "market_neutral",
   "name": "monthly_sharpe158",
+  "parameters_sha256": "2e104ee839df7072290e6733ec5aca29a3aa83d823e5cc9f46d9f58dc16c9f4d",
+  "weighting": {
+    "choice": 2,
+    "description": "Factor scoring and configured model construction",
+    "alpha_column": null,
+    "risk_controls": "as configured in model"
+  },
   "backtest": {
     "start_date": "2022-01-01",
     "end_date": "2026-10-22",
@@ -27,10 +34,10 @@
     "latest_ranked": 75,
     "ranked_stock_months": 4438,
     "stale_price_legs": 0,
-    "full_window_sharpe": 1.636387409751442,
+    "full_window_sharpe": 1.63638740975144,
     "zero_rate_return_volatility_ratio": 2.321095133107902,
     "full_window_max_drawdown": -0.04786090294602,
-    "sharpe": 1.636387409751442,
+    "sharpe": 1.63638740975144,
     "volatility": 0.059339688017158,
     "max_drawdown": -0.04786090294602,
     "beta": -0.032019504668348
@@ -64,7 +71,7 @@
       "year": 2023,
       "portfolio": "SPY",
       "return": 0.24286799325793,
-      "sharpe": 1.337377462732147,
+      "sharpe": 1.337377462732148,
       "volatility": 0.131888101950397,
       "max_drawdown": -0.102907479389687
     },
@@ -72,7 +79,7 @@
       "year": 2024,
       "portfolio": "Strategy",
       "return": 0.094893021475027,
-      "sharpe": 0.755305773624031,
+      "sharpe": 0.755305773624032,
       "volatility": 0.051203780243348,
       "max_drawdown": -0.04786090294602
     },
@@ -97,14 +104,14 @@
       "portfolio": "SPY",
       "return": 0.163527100439633,
       "sharpe": 0.659298946699258,
-      "volatility": 0.194818320933573,
+      "volatility": 0.194818320933574,
       "max_drawdown": -0.189989041295049
     },
     {
       "year": 2026,
       "portfolio": "Strategy",
       "return": 0.158078042662018,
-      "sharpe": 2.222235440364302,
+      "sharpe": 2.222235440364303,
       "volatility": 0.065897015743107,
       "max_drawdown": -0.029678215032354
     },
@@ -46720,11 +46727,7 @@
   "verification": {
     "accounting": "passed",
     "sessions": 1206,
-    "stale_price_legs": 0,
-    "independent_parameter_reconstruction": true,
-    "batch_nav_max_difference": 2.1187588572502136e-08,
-    "source_requests": 0,
-    "target_side_sector_beta_caps": "passed"
+    "stale_price_legs": 0
   },
   "performance": {
     "risk_free_settings": {
@@ -46856,16 +46859,5 @@
     "Latest vendor financial versions; known dates or assumed period-end +90 days.",
     "Dividends, short dividend compensation, cash interest and tax excluded."
   ],
-  "storage": "Only summary, daily NAV and annual attribution are persisted; rerun for the full in-memory ledger.",
-  "research": {
-    "trials": 5473,
-    "selected_key": "255dd5a853a0f9690c99c2cdb3385577c0565c0faa3e195a19ec0efdc6a624bc",
-    "selection": "Lower complete-year return dispersion among clean positive-year historical-RF Sharpe>=1.58 candidates",
-    "cashflow_required": true,
-    "annual_parameter_switching": false,
-    "full_sample_selection": true,
-    "independent_out_of_sample": false,
-    "parameter_file_self_contained": true
-  },
-  "parameters_sha256": "2e104ee839df7072290e6733ec5aca29a3aa83d823e5cc9f46d9f58dc16c9f4d"
+  "storage": "Only summary, daily NAV and annual attribution are persisted; rerun for the full in-memory ledger."
 }

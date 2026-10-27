@@ -47,6 +47,8 @@ The self-contained Market Neutral preset can also be run directly: `.venv/Script
 
 The repository includes a lossless SQLite snapshot in `aqr_research/data/aqr.sqlite3.gz`, stored with Git LFS, and a checksum manifest. The active uncompressed database, 3,611 raw quarterly statement CSV exports, local backups, recovery evidence and generated search caches stay local. The historical RF file, dated replay inputs and cointegration pool are retained because the saved runs use them in addition to SQLite.
 
+Use `main` for the latest version. If using GitHub's **Download ZIP**, separately download the [actual database archive](https://media.githubusercontent.com/media/asd1354403003/Long-Short-Tax-Saving/main/aqr_research/data/aqr.sqlite3.gz) into `aqr_research/data/` if the ZIP only contains a small Git LFS pointer. The real archive is approximately 738 MB. For a ZIP download, skip `git lfs pull` and run the database-restoration command below after installing the Python dependencies. Restoration produces `aqr_research/data/aqr.sqlite3` beside the archive. For a Git clone, use both commands.
+
 After creating the Python environment and installing `requirements.txt`, run this from the project root on a fresh clone:
 
 ```powershell
