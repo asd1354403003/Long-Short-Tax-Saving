@@ -39,7 +39,9 @@ result/
 
 The Market Neutral Python preset contains all 30 shared model nodes, allocations, factor weights, construction, limits, dates, fees and RF settings. It does not depend on search outputs. The JSON contains daily NAV, annual attribution and verification.
 
-Run `.venv/Scripts/python.exe result/aqr/monthly_sharpe158/parameters.py`, or set `RERUN=True` in `analysis_market_neutral.ipynb`. Market Neutral replays use local inputs without searching or downloading.
+Both analysis notebooks default to `RERUN=True`, so Run All recalculates the current parameters. Market Neutral uses the restored local SQLite database and dated inputs without searching or downloading. Cointegration replays the frozen pool and may request missing historical prices. Use `RERUN=False` only to inspect a saved record. Market Neutral displays average long/short stock counts beside the performance summary, separately for rebalance targets and daily executed holdings.
+
+The self-contained Market Neutral preset can also be run directly: `.venv/Scripts/python.exe result/aqr/monthly_sharpe158/parameters.py`.
 
 ## Database after cloning
 
@@ -56,7 +58,7 @@ Restoration streams the database to its relative path, verifies the complete byt
 
 ## Settings precedence
 
-`PARAMETER_FILE=None` in the Market Neutral notebook uses `AQRSettings.selected_parameter_file`. An explicit path overrides it; a missing explicit path raises. Preset execution and performance fields override method defaults; omitted fields in those two sections use defaults. The separate quarterly three-factor baseline does not override the selected monthly preset. A saved result must match the parameter fingerprint; set `RERUN=True` after a preset edit.
+`PARAMETER_FILE=None` in the Market Neutral notebook uses `AQRSettings.selected_parameter_file`. An explicit path overrides it; a missing explicit path raises. Preset execution and performance fields override method defaults; omitted fields in those two sections use defaults. The separate quarterly three-factor baseline does not override the selected monthly preset. `RERUN=True` is the default; a preset edit takes effect on the next Run All. Optional `RERUN=False` requires a matching saved-result fingerprint.
 
 [Selected preset](result/aqr/monthly_sharpe158/parameters.py) | [Method defaults](methods/aqr_factors/settings.py) | [Shared routing](settings.py)
 

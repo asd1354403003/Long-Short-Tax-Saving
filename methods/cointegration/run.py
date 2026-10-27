@@ -35,8 +35,9 @@ def _restore(template, values):
 def run(parameters, *, output=None, histories=None):
     """Reuse the saved pool. Missing history is downloaded only on an explicit run.
 
-    The analysis notebook defaults to displaying the saved result without making
-    network requests. Pass histories here for an entirely offline execution.
+    The analysis notebook defaults to replaying the current execution settings.
+    Pass histories here for an entirely offline execution. RERUN=False in the
+    notebook is an optional saved-record view, without network requests.
     """
     params = _restore(CointegrationParameters(), parameters["selection"])
     config = BacktestConfig(**parameters["backtest"])
@@ -46,6 +47,9 @@ def run(parameters, *, output=None, histories=None):
         raise FileNotFoundError("The frozen pool/selection metadata is missing; refusing to retrain implicitly")
     selection = selector.select(rebuild=False)
     result = selector.backtest(selection, histories=histories)
+    # Distinct tickers per side, after aggregation across held pair lots.
+    result["daily_summary"]["long_stocks"] = result["daily_positions_long"].gt(0).sum(axis=1)
+    result["daily_summary"]["short_stocks"] = result["daily_positions_short"].lt(0).sum(axis=1)
     rf = historical_risk_free(result["daily_summary"].index,
                              parameters.get("performance", {}).get("risk_free"))
     result["daily_risk_free"] = rf
