@@ -1,103 +1,99 @@
-# Long-Short Tax Saving
+# Long / Short Tax Saving
 
-V2 studies a large pair pool, z-score entry/exit and realized losses. It reports price P&L before tax; it does not calculate deductible losses, tax payable or after-tax wealth. The old A/B/C version is preserved in GitHub tag [v1.0.0](https://github.com/asd1354403003/Long-Short-Tax-Saving/tree/v1.0.0). Its entry notebook, rotation code and two CSVs have been removed from local V2 after extracting shared utilities. Development stays on local branch `research/pair-pool-v2`; it is not pushed.
+The strategy is named **Market Neutral**. The three AQR reports cited in the HTML are research references; the model implementation, parameter selection and results belong to this project.
 
-## Run
+- [Research report](report.html): Market Neutral methodology, data, settings, results and the proposed tax-aware extension, with AQR reports cited as references. Use the fixed English/Chinese control to switch languages; the report works offline.
+- [Market Neutral analysis](analysis_market_neutral.ipynb): current monthly model, daily RF and annual fee breakdown.
+- [Cointegration analysis](analysis_cointegration.ipynb): this method's frozen historical record.
+- [Historical universe](aqr_research/universe.html): dated IWB membership proxy.
 
-Use the project Python environment and relative paths. Install `requirements.txt`, then restart the notebook kernel after changing Python modules.
+## Current Market Neutral result
 
-1. `pair_pool.ipynb`: discover candidates, train fixed-scale signals, validate in 2025 and save `data/pair_pool.csv`.
-2. `analysis.ipynb`: load that frozen pool, download test-period Open/Close in memory and run the 2026 strategy.
+2022-01-03 to 2026-10-22; monthly rebalance; initial NAV $1,000,000.
 
-Analysis saves no additional CSV or price cache. The pair-pool notebook only overwrites its final CSV.
+| Metric | Result |
+|---|---:|
+| Sharpe, historical daily RF | 1.6364 |
+| Cumulative net return | 91.66% |
+| Maximum drawdown | -4.79% |
+| Beta vs SPY | -0.0320 |
+| 2022 / 2023 / 2024 / 2025 | 14.62% / 8.30% / 9.49% / 21.77% |
+| 2026 YTD, through October 22 | 15.81% |
+| Trading / borrow costs | $23,405 / $32,484 |
 
-## Files
+This is an in-sample selected model, not independent out-of-sample validation. The latest search evaluated 5,473 computable cases, including sector component controls; the selected account separately passed full-ledger and constraint checks. All years were positive, but returns differ. Earlier seed models also used inspected history.
 
-| File | Purpose |
-| --- | --- |
-| `cointegration.py` | Explicit same-date Close OLS, Engle-Granger and ADF |
-| `market_data.py` | Shared formation configuration, pair analysis and Yahoo downloads |
-| `pair_pool.py` | Industry/exposure discovery and size/liquidity/statistical screening |
-| `pair_training.py` | Fixed mean_square scale, single-Z training and independent validation |
-| `pair_backtest.py` | Ranked multi-pair execution, integer sizing and cash/P&L accounting |
-| `risk.py` | Market beta, rolling beta and dollar-P&L VaR/CVaR |
-| `industry_relationships.json` | Curated related-industry graph; not verified company contracts |
-| `etf_universe.json` | Commodity and other ETF/ETP catalog and issuer references |
-| `data/pair_pool.csv` | Frozen candidates, parameters, provenance and validation results |
+Cash-flow yield is required in every underlying small factor combination. Sixteen top-level component allocations remain fixed across years; each date's targets are rebuilt and projected to the account constraints. Blend coefficients are not static realized sector or factor exposures.
 
-Chinese notes: [readme2.md](readme2.md).
-
-## Formation and validation
-
-- Equities target 300 pairs among at most 1,000 US-listed USD equities, with current market cap >= USD 10 billion. ETFs target 50 commodity and 50 other pairs, with current AUM >= USD 100 million. No equity market-cap substitution for missing ETF AUM.
-- The catalog covers 45 commodity products plus broad/style/sector/international equity, REIT and bond ETFs. Physical bullion, commodity futures and mining/energy-company equities are distinguished. It excludes leveraged/inverse products, ETNs and closed-end funds. Same or explicitly related industry/exposure groups can pair; no stock/ETF cross-pairs. Each ETF exposure-group combination has a five-pair cap. `tracking_pair` flags configured same-index/metal candidates, without establishing a trading edge or tax eligibility.
-- Formation uses **2022-2024 only**, at least 750 observations, Close correlation > 0.90, EG 95%, residual ADF -2.86 and fixed lag 1. ETF levels additionally must support I(1); the existing equity I(1) assumption remains. Final-60-observation mean Close*Volume must be >= USD 20 million, formation-end Close >= USD 5, and the illustrative order <= 0.5% of historical ADV in either direction. Targets are not filled by weakening filters.
-- Market cap, AUM, classifications and current catalog membership are snapshots, not historical constituents. They introduce survivorship/selection bias even though price-based formation stops in 2024.
-
-## Original fixed-scale single-Z signal
-
-There is **no rolling z-score window**. Fit `Close_y = alpha + beta*Close_x`, then the residual AR(1), `e_t=C+B*e_(t-1)+innovation`, with `0<B<1`. Preserve the original mean_square formula:
+## Results: two files per candidate
 
 ```text
-tau = 1/252
-theta = -log(B)/tau
-mu_e = C/(1-B)
-sigma_eq = sqrt(mean(e**2)*tau/(1-exp(-2*theta*tau)))
-z = (e-mu_e)/sigma_eq
+result/
+  aqr/monthly_sharpe158/
+    parameters.py
+    result.json
+  cointegration/frozen2026/
+    parameters.py
+    result.json
 ```
 
-The numerator deliberately matches the original spread second moment rather than innovation variance. Test entry Z=0.25 to 3.50 in steps of 0.25. Default exit is Z/2. Choose training cumulative budget return first and Sharpe second, requiring five completed trades; training performance is in-sample. Freeze training coefficients/scale/Z and evaluate once in **2025**. `validation_passed` requires positive training P&L/Sharpe, at least two validation trades and positive validation P&L/Sharpe. Rejected rows retain their results/reasons. Final CSV order is descending `validation_sharpe`, with missing values last.
+The Market Neutral Python preset contains all 30 shared model nodes, allocations, factor weights, construction, limits, dates, fees and RF settings. It does not depend on search outputs. The JSON contains daily NAV, annual attribution and verification.
 
-Separate `refit_*` regression/scale estimates use **2022-2025** and are computed after validation. They do not choose Z or change validation results. The 2026 strategy uses these pre-2026 estimates, fixed throughout the test, with selected `entry_z`, `exit_z` and `stop_loss`. **2026 is never used for fitting or parameter selection.**
+Run `.venv/Scripts/python.exe result/aqr/monthly_sharpe158/parameters.py`, or set `RERUN=True` in `analysis_market_neutral.ipynb`. Market Neutral replays use local inputs without searching or downloading.
 
-## 2026 ranked strategy and capital
+## Database after cloning
 
-Default `max_pairs=15`, `long_amount=1_000_000`. Each slot has a nominal long budget of **USD 1,000,000/15 = USD 66,666.67** and the same short-leg cap. With frozen positive beta, one common `strict_one_leg` scale limits both legs at entry before rounding down to whole shares. Integer rounding and the common hedge scale can leave either leg below its cap. Shares stay fixed until exit; limits are entry limits, not daily trims, so exposures can drift as prices move. The fixed reference account budget is **USD 2 million**, including unused cash; interest is zero.
+The repository includes a lossless SQLite snapshot in `aqr_research/data/aqr.sqlite3.gz`, stored with Git LFS, and a checksum manifest. The active uncompressed database, 3,611 raw quarterly statement CSV exports, local backups, recovery evidence and generated search caches stay local. The historical RF file, dated replay inputs and cointegration pool are retained because the saved runs use them in addition to SQLite.
 
-Only validated pairs with `refit_status="ok"` are eligible. Scan descending 2025 Sharpe at each Close. High z shorts Y/longs X; low z does the reverse. Close signals fill at the next common trading Open, so the final 2025 Close can generate the first 2026 entry. January 1 is a requested start boundary, not a forced fill date. `end_date=None` includes today's data only after 17:00 New York time, allowing a publication buffer; otherwise it ends before today.
+After creating the Python environment and installing `requirements.txt`, run this from the project root on a fresh clone:
 
-Exit both legs when z returns to or crosses its signed exit threshold, including overshoots, or when Close-marked trade loss reaches 12% of entry gross exposure. Execute at next Open; gaps can exceed the stop. Process exits before ranked new entries, maintaining at most 15 active pairs. Every Close scan restarts at the highest Sharpe. Currently held pairs are skipped. **Closed pairs can be traded again** when their signals qualify. Preserve the saved `prevent_immediate_reentry` rule: when true, suppress that pair's new entry signal on its execution-exit day, then resume normal ranking the following session. This prevents immediate stop/re-entry churn without imposing a lifetime ban. Tickers may appear in later unused pairs, but by default cannot overlap between simultaneous pairs (`allow_shared_tickers=False`). This rule is configurable.
+```powershell
+git lfs pull
+.venv/Scripts/python.exe -m methods.aqr_factors.database
+```
 
-Missing entry Open prices skip that candidate. A missing exit Open delays its pending exit until valid prices are available. Missing Close marks use the last already-known mark, or entry Open for a new holding, and increment `stale_price_legs`; they are never backfilled from future prices. Data gaps do not remove pairs by inspecting their entire future test history.
+Restoration streams the database to its relative path, verifies the complete byte count and SHA-256, and refuses to overwrite an existing database. The snapshot passed SQLite `quick_check` and a complete compression/decompression checksum comparison before publication. Local-only source evidence referenced elsewhere in this README is not included in the Git release.
 
-Unfilled slots stay in cash when no eligible signal survives position/ticker/cooldown checks. `active_pairs` counts current positions, `entry_count` counts all entries, and `traded_pairs` counts distinct pairs ever traded. Past use does not deplete eligibility. The backtest does not force 15 holdings or liquidate everything at the last available date. End holdings retain unrealized P&L. This execution rule differs from training's scheduled period-end liquidation, which exists to compare complete training/validation P&L and is reported by `forced_exits`.
+## Settings precedence
 
-## Outputs and accounting
+`PARAMETER_FILE=None` in the Market Neutral notebook uses `AQRSettings.selected_parameter_file`. An explicit path overrides it; a missing explicit path raises. Preset execution and performance fields override method defaults; omitted fields in those two sections use defaults. The separate quarterly three-factor baseline does not override the selected monthly preset. A saved result must match the parameter fingerprint; set `RERUN=True` after a preset edit.
 
-`PairPoolBacktester.run()` returns daily long/short dollar-position matrices, pair-level daily holdings, events, closed pairs, end holdings, z-scores and `daily_summary`. Positive shares/amounts are long; negatives are short. Events show the triggering `signal_date` and actual `execution_date`. The trade table records both legs' realized P&L. Each round trip has a unique `trade_id`, so repeated entries in the same pair remain separate. `pair_performance` reconciles all realized round trips and remaining unrealized P&L by pair; current holdings include calendar `holding_days`.
+[Selected preset](result/aqr/monthly_sharpe158/parameters.py) | [Method defaults](methods/aqr_factors/settings.py) | [Shared routing](settings.py)
 
-- Daily cash plus signed market values determines NAV. Trades exchange cash and positions; trading notional is not profit. Old positions' overnight gaps and new positions' Open-to-Close moves are included.
-- `daily_return = daily_pnl / (2*long_amount)` and `cumulative_return = cumulative_pnl / (2*long_amount)`. These fixed-budget returns include idle cash; cumulative return is not the product of the daily budget returns.
-- `cumulative_pnl = cumulative_realized_pnl + unrealized_pnl` at every date. Realized losses sum negative **leg** P&L, even in a profitable pair; realized gains sum positive leg P&L. Neither amount is automatically tax deductible/taxable as recorded.
-- SPY uses its first test-session Open as the benchmark base and later Close valuations. Its return excludes distributions. Market beta compares the same daily strategy/SPY series after excluding the first Open-to-Close day. Market rolling beta remains a separate 60-observation statistic.
-- Historical/normal VaR and CVaR use daily dollar P&L directly.
+### Weighting choices
 
-All prices use the vendor Open/Close with `auto_adjust=False`, not Adj Close; vendor history may reflect splits. Ignore dividend/distribution receipts, short compensation payments, financing, margin, borrow fees and transaction costs. These are price returns, not distribution-inclusive returns. Nonzero fee settings are rejected. Trading P&L is not a historical tax-lot ledger, and commodity ETP structures need separate tax modelling.
+Set `PARAMETERS["weighting_method"]` in the selected preset (it overrides the method default):
 
-## Tax research scope
+1. **Supplied alpha, demean / L1**: subtract the configured group's mean alpha and divide by the absolute sum across the date. `alpha_column` chooses a dated input column; the bundled `"score"` is the frozen original value/quality/momentum baseline score, not the selected blend. Set `portfolio.group_by=None` for whole-pool demeaning, as in the five-stock example. This branch bypasses the model, tails, volatility sizing, beta controls, smoothing and single-name cap. Dollar neutrality alone does not guarantee beta neutrality.
+2. **Configured factor model**: rank/standardize factors and apply the selected model's construction, blending and limits. This remains selected; the saved Sharpe 1.6364 belongs to this branch.
+3. **AQR reference method**: reserved, not implemented; selecting it raises before any data loading or trading. The legacy low-level `aqr_style` approximation is not this reference implementation.
 
-The long-term objective is to compare investment returns and realized losses under tax constraints. Cointegration or changing tickers does not establish wash-sale or straddle eligibility. V2 currently evaluates the signal strategy and economic leg-level gains/losses; a tax-aware strategy and final tax liability remain future work.
+Both simple examples in the report use the same final normalization, `(alpha - mean(alpha)) / sum(abs(alpha - mean(alpha)))`. They differ in how alpha is supplied or generated. The direct API is `PortfolioConstructor(ConstructionConfig(method="demean_l1", group_by=None)).build(frame, score_column="alpha")`, with dated `as_of`, `ticker` and `alpha` columns. This reproduces `[-5, -15, -66, -85, -25]` without ranking those supplied alpha values. Changing the weighting choice invalidates the saved-result fingerprint; rerun to evaluate it. No new simple-method performance result is claimed.
 
-## Wash-sale rules
+## Execution, annual fees and RF
 
-Section 1091(a) refers to **"substantially identical stock or securities"** and states **"no deduction shall be allowed under section 165"** for the specified loss transactions. The window runs from 30 calendar days before through 30 days after the loss disposition, including the disposition date. Section 1091(e) provides related rules for losses on closing short sales. See [26 U.S.C. section 1091](https://uscode.house.gov/us/usc/119-118/t26/s1091/).
+Targets: gross=1, long=+0.5, short=-0.5, single-name weight <=5%, sector net exposure=0, estimated beta=0. Integer shares and price drift can change actual exposures. Completed month-end signals execute at the following session Open. Trading costs are 5 bps of actual traded notional, including trims and sign flips. Short borrow is 1% annualized, ACT/360, including weekends. Dividends, short dividend compensation, cash interest and tax are excluded.
 
-For ordinary taxable-account replacement purchases, the IRS instructs taxpayers to **"add the disallowed loss to the cost of the new stock or securities"**; the holding period generally carries over. IRA/Roth IRA replacement acquisitions have different consequences. See [IRS Publication 550, Wash Sales](https://www.irs.gov/publications/p550).
+The notebook and HTML split annual trading and borrow costs in USD and as contributions divided by each year's opening NAV. Fees are already deducted from net returns; do not deduct them again.
 
-Renaming a basket does not avoid a security-level restriction: selling X at a loss in B and immediately buying X in C still requires review. Buying shares to cover an existing short is a closing transaction; separately evaluate whether the surrounding transactions trigger the short-sale rules.
+RF uses cached [FRED DGS1MO](https://fred.stlouisfed.org/series/DGS1MO), daily observations of an annual percent one-month Treasury yield. The valid quote mean for 2022-01-01 to 2026-10-22 is **4.0349% per year**; mean aligned NAV-interval RF return is **0.01609%**. These averages describe the data; the selected Sharpe uses historical daily matching rather than a fixed average yield.
 
-## Straddle rules and continued deferral
+For each NAV interval, use the latest valid quote strictly before its start and accrue `(1 + annual_percent / 100 / 365) ** calendar_days - 1`. The first interval uses a one-day approximation. This is a yield-accrual proxy, not a realized Treasury-index return. Missing quotes or quotes older than seven days raise. Sharpe is `sqrt(252) * mean(daily net return - RF) / sample_std(daily net return - RF)`, ddof=1. RF is a benchmark, not an interest credit to NAV.
 
-Section 1092(c)(1) states: **"The term 'straddle' means offsetting positions with respect to personal property."** The definition concerns reduced loss risk, not merely a strategy name. Stock eligibility also depends on section 1092(d)(3). See [26 U.S.C. section 1092](https://uscode.house.gov/us/usc/119-118/t26/s1092/).
+## Files and provenance
 
-Under the general rule, a loss is recognized only to the extent it exceeds relevant offsetting positions' unrecognized gains. Year-end valuations matter. Section 1092(a)(1)(B) carries a restricted loss into the succeeding year **subject to the same restriction**; a new year does not automatically release it.
+- Root notebooks and shared market data, risk, reporting and cost modules.
+- `methods/aqr_factors/`: Market Neutral settings, scoring, construction, ledger, replay and tests.
+- `methods/cointegration/`: pair training and execution; frozen pool in `data/pool.csv`.
+- `aqr_research/data/aqr.sqlite3`: sole active AQR database, with raw CSVs and backups nearby.
+- `aqr_research/data/backtest_inputs/`: frozen dated inputs; replays recompute ranks, targets and ledger.
+- `aqr_research/data/DGS1MO.csv`: raw RF quotes; companion metadata stores provenance and checksum.
+- `methods/aqr_factors/research/rf_search/`: latest search audit, separate from presentation results.
 
-A simplified example, assuming the general rule and no other adjustments:
+Financials are latest vendor versions, potentially restated. Known availability dates take priority; missing dates use the explicit period-end +90-day assumption. IWB membership release times are not independently verified. These are not a fully verified point-in-time archive. The old cointegration record lacks daily NAV, so historical-RF Sharpe is unverified.
 
-| Year | State of the related positions | Illustrative treatment |
-| --- | --- | --- |
-| 1 | Realize a $10,000 loss; year-end unrecognized gain is $10,000 | Defer the $10,000 loss |
-| 2 | Keep the gain position; cumulative unrecognized gain reaches $12,000 | The $10,000 can remain deferred |
-| 3 | Realize the $12,000 gain; dispose of all related positions, with no relevant successor positions | If the $10,000 loss is fully released, the net gain is $2,000 |
+Shared cost calculations live in root `backtest.py`; pair-specific sizing stays in the cointegration execution module. HTML is a dated saved-result report, not a live update. Authored project files are English; original documents, raw data and historical evidence remain verbatim.
 
-Replacement and successor-position coordination also matters. See [IRS Publication 550, Straddles and Coordination of Loss Deferral Rules and Wash Sale Rules](https://www.irs.gov/publications/p550). Identified straddles and other special cases require separate treatment.
+## Continuing fundamental recovery
+
+Source evidence, identity mappings and checkpoints remain in `methods/aqr_factors/research/results/` and SQLite. Earlier worker instructions were superseded by member-site quarterly CSV downloads. Do not restart recovery workers or recreate per-ticker official parsers during normal analysis. Preserve source documents, units, currency, periods and availability evidence. Do not fill missing historical facts using acquirer financials or current ratios.

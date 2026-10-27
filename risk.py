@@ -1,10 +1,105 @@
-"""Market-beta plots and historical/normal VaR and CVaR."""
+"""Historical risk-free benchmarks, market beta, and VaR/CVaR."""
+
+from pathlib import Path
+import hashlib
+import json
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from scipy.stats import norm
+
+
+RISK_FREE_SETTINGS = {
+    "source": "fred_dgs1mo",
+    "file": "aqr_research/data/DGS1MO.csv",
+    "day_count": 365,
+    "max_quote_age_days": 7,
+}
+
+
+def treasury_risk_free(dates, yields, *, day_count=365, max_quote_age_days=7):
+    """Accrue a lagged 1-month Treasury yield proxy over each NAV interval.
+
+    H.15 DGS1MO is an annual percent investment-basis YIELD, not a daily
+    realized Treasury-index return. Use the latest observation strictly before
+    the interval starts, simple annual/365 daily accrual and calendar-day gaps.
+    The initial intraday NAV interval uses one day as an explicit approximation.
+    Missing/stale observations raise; they never turn into zero or future fills.
+    """
+    dates = pd.DatetimeIndex(dates).tz_localize(None).normalize()
+    if len(dates) == 0 or dates.has_duplicates or not dates.is_monotonic_increasing:
+        raise ValueError("Risk-free dates must be nonempty, unique and increasing")
+    if day_count != 365 or max_quote_age_days < 1:
+        raise ValueError("Use ACT/365 and a positive maximum quote age")
+    quotes = pd.Series(yields, dtype=float).copy()
+    quotes.index = pd.DatetimeIndex(quotes.index).tz_localize(None).normalize()
+    if quotes.index.has_duplicates:
+        raise ValueError("Duplicate Treasury yield observations")
+    quotes = quotes.dropna().sort_index()
+    if not np.isfinite(quotes).all() or (1 + quotes / 100 / day_count <= 0).any():
+        raise ValueError("Invalid Treasury yield")
+    starts = pd.DatetimeIndex([dates[0] - pd.Timedelta(days=1), *dates[:-1]])
+    matched = pd.merge_asof(pd.DataFrame({"start": starts}),
+        pd.DataFrame({"quote_date": quotes.index, "annual_percent": quotes.values}),
+        left_on="start", right_on="quote_date", direction="backward", allow_exact_matches=False)
+    age = (matched.start - matched.quote_date).dt.days
+    if matched.annual_percent.isna().any() or age.gt(max_quote_age_days).any():
+        bad = dates[matched.annual_percent.isna().to_numpy() | age.gt(max_quote_age_days).to_numpy()]
+        raise ValueError("Missing/stale Treasury benchmark for: " + ", ".join(bad.strftime("%Y-%m-%d")[:5]))
+    days = (dates - starts).days.to_numpy()
+    values = (1 + matched.annual_percent.to_numpy() / 100 / day_count) ** days - 1
+    result = pd.Series(values, index=dates, name="risk_free_return")
+    result.attrs["basis"] = "Lagged DGS1MO yield-accrual proxy, ACT/365; first NAV interval approximated by one day"
+    return result
+
+
+def historical_risk_free(dates, settings=None):
+    """Read a cached, dated official-rate source; never download implicitly."""
+    config = {**RISK_FREE_SETTINGS, **(settings or {})}
+    if set(config) != set(RISK_FREE_SETTINGS) or config["source"] != "fred_dgs1mo":
+        raise ValueError("Unsupported historical risk-free settings")
+    path = Path(config["file"])
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError("Use a project-relative risk-free source path")
+    path = Path(__file__).resolve().parent / path
+    frame = pd.read_csv(path, parse_dates=["observation_date"])
+    values = pd.to_numeric(frame.DGS1MO, errors="coerce")
+    rates = treasury_risk_free(dates, pd.Series(values.to_numpy(), index=frame.observation_date),
+        day_count=config["day_count"], max_quote_age_days=config["max_quote_age_days"])
+    metadata_path = path.with_suffix(".metadata.json")
+    provenance = json.loads(metadata_path.read_text(encoding="utf-8")) if metadata_path.exists() else {}
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if provenance.get("sha256", digest) != digest:
+        raise ValueError("Risk-free source checksum does not match provenance")
+    rates.attrs.update(settings=config, provenance=provenance, source_sha256=digest)
+    return rates
+
+
+def benchmark_returns(dates, *, daily_risk_free=None, annual_risk_free_rate=None):
+    """Align a required benchmark; historical Treasury rates are the default."""
+    dates = pd.DatetimeIndex(dates)
+    if daily_risk_free is not None and annual_risk_free_rate is not None:
+        raise ValueError("Specify daily or annual risk-free returns, not both")
+    if annual_risk_free_rate is not None:
+        if not np.isfinite(annual_risk_free_rate) or annual_risk_free_rate <= -1:
+            raise ValueError("Invalid annual risk-free rate")
+        return pd.Series((1 + annual_risk_free_rate) ** (1 / 252) - 1, index=dates)
+    if daily_risk_free is None:
+        return historical_risk_free(dates)
+    if not isinstance(daily_risk_free, pd.Series) or daily_risk_free.index.has_duplicates:
+        raise ValueError("Provide uniquely dated daily risk-free returns")
+    aligned = daily_risk_free.reindex(dates)
+    if not np.isfinite(aligned).all():
+        raise ValueError("Risk-free returns must cover every NAV date; no zero filling")
+    return aligned
+
+
+def excess_sharpe(returns, risk_free):
+    excess = returns - benchmark_returns(returns.index, daily_risk_free=risk_free)
+    deviation = excess.std(ddof=1)
+    return excess.mean() / deviation * np.sqrt(252) if deviation > 0 else np.nan
 
 
 class BetaAnalysis:

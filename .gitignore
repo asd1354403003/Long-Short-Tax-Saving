@@ -2,3 +2,31 @@
 __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
+aqr_research/data/**/*.sqlite3
+aqr_research/data/**/*.sqlite3-wal
+aqr_research/data/**/*.sqlite3-shm
+aqr_research/data/*.sqlite3
+aqr_research/data/*.sqlite3-wal
+aqr_research/data/*.sqlite3-shm
+
+# Raw statement exports, local backups and download/reconciliation evidence.
+# The database snapshot and small inputs required by saved replays are kept.
+/aqr_research/data/*
+!/aqr_research/data/aqr.sqlite3.gz
+!/aqr_research/data/aqr.sqlite3.manifest.json
+!/aqr_research/data/DGS1MO.csv
+!/aqr_research/data/DGS1MO.metadata.json
+!/aqr_research/data/backtest_inputs/
+/aqr_research/data/backtest_inputs/*
+!/aqr_research/data/backtest_inputs/metadata.json
+!/aqr_research/data/backtest_inputs/monthly_raw_factors.csv.gz
+!/aqr_research/data/backtest_inputs/monthly_extra_inputs.csv.gz
+
+# Generated source-recovery evidence and search caches stay local.
+/methods/aqr_factors/research/results/
+/methods/aqr_factors/research/rf_search/
+
+# Machine-local credentials and authoring helpers are not release artifacts.
+.env
+.env.*
+/.prepare_push_snapshot.py

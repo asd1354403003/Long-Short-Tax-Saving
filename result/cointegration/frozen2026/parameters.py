@@ -1,0 +1,88 @@
+"""Frozen 2022-2025 training, 2026 deployment. Rerun downloads prices if not supplied.
+The existing pool is reused; execution does not refit or retrain.
+"""
+PARAMETERS = {'name': 'frozen2026',
+ 'selection': {'train_start': '2022-01-01',
+               'train_end': '2025-12-31',
+               'min_observations': 800,
+               'max_half_life_years': 0.2,
+               'min_train_trades': 8,
+               'workers': 4,
+               'pool': {'target_pairs': 1000,
+                        'target_commodity_pairs': 150,
+                        'target_other_etf_pairs': 150,
+                        'target_fx_pairs': 50,
+                        'max_etf_pairs_per_group': 15,
+                        'include_equities': True,
+                        'include_etfs': True,
+                        'include_fx': True,
+                        'require_etf_i1': True,
+                        'require_fx_i1': True,
+                        'fx_unit_step': 1000,
+                        'max_assets': 2000,
+                        'min_market_cap': 5000000000,
+                        'min_etf_assets': 100000000,
+                        'min_average_dollar_volume': 20000000,
+                        'liquidity_window': 60,
+                        'min_price': 5.0,
+                        'reference_long_amount': 100000,
+                        'max_order_fraction_adv': 0.005,
+                        'min_correlation': 0.9,
+                        'confidence_level': 0.95,
+                        'batch_size': 20,
+                        'extra_equivalent_ticker_groups': [['PBR', 'PBR-A'], ['LEN', 'LEN-B']],
+                        'cointegration': {'train_start': '2022-01-01',
+                                          'train_end': '2024-12-31',
+                                          'min_observations': 750,
+                                          'max_lag': 1,
+                                          'check_i1': False},
+                        'relationship_file': 'methods/cointegration/industry_relationships.json',
+                        'etf_catalog_file': 'methods/cointegration/etf_universe.json',
+                        'output_file': 'methods/cointegration/data/pool.csv'},
+               'rules': {'entries': [1.5, 2.0, 2.5, 3.0],
+                         'exits': [0.0, 0.5],
+                         'stop_gaps': [0.9, 1.8],
+                         'min_expected_ratio': 1.5,
+                         'min_realized_payoff': 1.0,
+                         'min_winners': 2,
+                         'min_losers': 2,
+                         'overshoot_z': 0.25,
+                         'entry_band_z': 0.25,
+                         'rounding_move_fraction': 0.02,
+                         'min_win_rate': 0.5},
+               'entry_selection': 'sharpe_then_distance',
+               'distance_fallback_after_days': 10,
+               'require_reversion': True,
+               'max_fallback_distance_z': 0.5},
+ 'backtest': {'start_date': '2026-01-01',
+              'end_date': '2026-10-22',
+              'long_amount': 1000000,
+              'short_amount': 1000000,
+              'max_positions_per_side': 15,
+              'execution_timing': 'close',
+              'borrow_fee_rate': 0.01,
+              'transaction_cost_rate': 0.0005,
+              'fx_financing_rate': 0.0,
+              'take_profit_amount': 2000,
+              'stop_loss_amount': None,
+              'exit_on_signal': True,
+              'exit_on_pool_removal': False,
+              'allow_reentry': True},
+ 'performance': {'risk_free': {'source': 'fred_dgs1mo',
+                               'file': 'aqr_research/data/DGS1MO.csv',
+                               'day_count': 365,
+                               'max_quote_age_days': 7},
+                 'cash_interest_in_nav': False,
+                 'annualization_sessions': 252}}
+
+def main():
+    from pathlib import Path
+    import sys
+    roots = [*Path(__file__).resolve().parents, Path.cwd(), *Path.cwd().parents]
+    root = next(p for p in roots if (p / "methods/cointegration/run.py").is_file())
+    sys.path.insert(0, str(root))
+    from methods.cointegration.run import run
+    run(PARAMETERS, output=Path(__file__).with_name("result.json"))
+
+if __name__ == "__main__":
+    main()

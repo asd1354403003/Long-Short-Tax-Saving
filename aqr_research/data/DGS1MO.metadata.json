@@ -1,0 +1,12 @@
+{
+  "source": "Federal Reserve H.15 via FRED",
+  "series": "DGS1MO",
+  "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1MO&cosd=2021-12-01&coed=2026-10-22",
+  "source_page": "https://fred.stlouisfed.org/series/DGS1MO",
+  "unit": "Annual percent, investment-basis yield; not a realized daily bill-index return",
+  "downloaded_at": "2026-10-27T00:58:36.918203+00:00",
+  "sha256": "83d333832129cace84c937383c40a5af877a9603fad8af19bf617edc8453ec78",
+  "rows": 1277,
+  "first": "2021-12-01",
+  "last": "2026-10-22"
+}

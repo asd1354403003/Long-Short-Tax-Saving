@@ -1,0 +1,157 @@
+{
+  "signal_settings": {
+    "universe": "russell1000_iwb_proxy",
+    "tickers": [],
+    "membership_file": null,
+    "group_by": "sector",
+    "factor_operators": {
+      "value": [
+        "group_rank",
+        "group_zscore"
+      ],
+      "quality": [
+        "group_rank",
+        "group_zscore"
+      ],
+      "momentum": [
+        "group_rank",
+        "group_zscore"
+      ]
+    },
+    "combine_operator": "vec_avg",
+    "database_path": "aqr_research/data/aqr.sqlite3",
+    "start": "2022-01-01",
+    "end_exclusive": "2026-10-23",
+    "min_stocks": 10,
+    "financial_source": "website_quarterly",
+    "financial_availability": "period_lag",
+    "financial_reporting_lag_days": 90,
+    "missing_value_method": "drop",
+    "missing_value_scope": "score_group",
+    "require_positive_book_equity": false
+  },
+  "construction": {
+    "method": "demean_l1",
+    "group_by": "sector",
+    "gross_exposure": 1.0,
+    "factor_columns": [
+      "value",
+      "quality",
+      "momentum"
+    ],
+    "risk_lookback": 252,
+    "risk_min_observations": 120,
+    "risk_lag_months": 1,
+    "covariance_shrinkage": 0.1,
+    "min_group_size": 10,
+    "risk_aversion": 5.0,
+    "alpha_scale": 1.0,
+    "horizon_years": 0.08333333333333333,
+    "net_exposure": 0.0,
+    "target_beta": 0.0,
+    "max_weight": 0.05,
+    "transaction_cost_rate": 0.0005,
+    "borrow_fee_rate": 0.01
+  },
+  "backtest_settings": {
+    "start_date": "2022-01-01",
+    "end_date": "2026-10-22",
+    "initial_nav": 1000000,
+    "transaction_cost_rate": 0.0005,
+    "borrow_fee_rate": 0.01,
+    "rebalance_frequency": "quarterly"
+  },
+  "source_metadata": {
+    "downloaded_at": "2026-10-26T09:32:26.258763+00:00",
+    "loaded_at": "2026-10-26T15:42:06.871273+00:00",
+    "requested_end_exclusive": "2026-10-23",
+    "start": "2022-01-01",
+    "yfinance_version": "1.7.0",
+    "financial_frequency": "quarterly",
+    "availability": {
+      "source": "Yahoo Finance member-site native quarterly CSV",
+      "availability_policy": "period_lag",
+      "reporting_lag_days": 90,
+      "report_versions": 180787,
+      "missing_date_references": 161277,
+      "excluded_unknown_date_versions": 0,
+      "assumed_date_versions": 161277,
+      "assumed_date_rule": "For missing dates only, fiscal period end plus lag days; not a verified publication date",
+      "quality_definition": "latest available quarterly gross profit / latest available total assets",
+      "value_definition": "latest available common stock equity / historical market capitalization",
+      "vintage": "latest vendor versions; date references are not proof of original historical values",
+      "usable_tickers_with_dated_reports": 1198
+    },
+    "financial_versions": "Latest Yahoo versions, potentially restated; not a point-in-time archive",
+    "shares": "Historical Yahoo shares timestamps, last duplicate kept; publication times not independently verified",
+    "price_basis": "Yahoo Close, no Adj Close or dividends; share counts matched to split-adjusted quote units",
+    "filters": "US domicile, USD prices and financials; finite selected factors; quality/ROA require positive total assets; book-equity policy applies to selected value only; no size/liquidity filters",
+    "factor_definitions": {
+      "value": "Latest available common stock equity / positive historical market cap; signed B/M retained unless require_positive_book_equity=True",
+      "quality": "Latest available quarterly gross profit / latest available total assets",
+      "momentum": "Close[t-21] / Close[t-252] - 1",
+      "earnings_yield": "Sum of 4 consecutive available quarters of NetIncomeCommonStockholders / historical market cap; negative earnings retain their negative sign",
+      "cashflow_yield": "Sum of 4 consecutive available quarters of OperatingCashFlow / historical market cap; negative cash flow retains its sign",
+      "roa": "Sum of 4 consecutive available quarters of NetIncome / latest available total assets (ending-assets proxy, not average assets)",
+      "low_volatility": "Negative annualized sample standard deviation of the last 126 daily Close returns"
+    },
+    "partial_month": "Omitted; only completed calendar months are ranked",
+    "backtest_run": false,
+    "database_path": "methods/aqr_factors/data/aqr.sqlite3",
+    "grouping_source": "historical_iwb_holdings",
+    "source_requests": {},
+    "fundamental_source_errors": [],
+    "score_storage": "recalculated_in_memory_from_cached_sources",
+    "calculated_months": 58,
+    "config": {
+      "universe": "russell1000_iwb_proxy",
+      "tickers": [],
+      "membership_file": null,
+      "group_by": "sector",
+      "factor_operators": {
+        "value": [
+          "group_rank",
+          "group_zscore"
+        ],
+        "quality": [
+          "group_rank",
+          "group_zscore"
+        ],
+        "momentum": [
+          "group_rank",
+          "group_zscore"
+        ]
+      },
+      "combine_operator": "vec_avg",
+      "database_path": "methods/aqr_factors/data/aqr.sqlite3",
+      "start": "2022-01-01",
+      "end_exclusive": "2026-10-23",
+      "min_stocks": 10,
+      "financial_source": "website_quarterly",
+      "financial_availability": "period_lag",
+      "financial_reporting_lag_days": 90,
+      "missing_value_method": "drop",
+      "missing_value_scope": "score_group",
+      "require_positive_book_equity": false
+    },
+    "min_stocks": 10,
+    "universe": "russell1000_iwb_proxy",
+    "industry": "Advertising Agencies, Aerospace & Defense, Agricultural Inputs, Airlines, Aluminum, Apparel Manufacturing, Apparel Retail, Asset Management, Auto & Truck Dealerships, Auto Manufacturers, Auto Parts, Banks - Diversified, Banks - Regional, Beverages - Brewers, Beverages - Non-Alcoholic, Beverages - Wineries & Distilleries, Biotechnology, Broadcasting, Building Materials, Building Products & Equipment, Business Equipment & Supplies, Capital Markets, Chemicals, Communication Equipment, Computer Hardware, Confectioners, Conglomerates, Consulting Services, Consumer Electronics, Copper, Credit Services, Department Stores, Diagnostics & Research, Discount Stores, Drug Manufacturers - General, Drug Manufacturers - Specialty & Generic, Education & Training Services, Electrical Equipment & Parts, Electronic Components, Electronic Gaming & Multimedia, Electronics & Computer Distribution, Engineering & Construction, Entertainment, Farm & Heavy Construction Machinery, Farm Products, Financial Conglomerates, Financial Data & Stock Exchanges, Food Distribution, Footwear & Accessories, Furnishings, Fixtures & Appliances, Gambling, Gold, Grocery Stores, Health Information Services, Healthcare Plans, Home Improvement Retail, Household & Personal Products, Industrial Distribution, Information Technology Services, Insurance - Diversified, Insurance - Life, Insurance - Property & Casualty, Insurance - Reinsurance, Insurance - Specialty, Insurance Brokers, Integrated Freight & Logistics, Internet Content & Information, Internet Retail, Leisure, Lodging, Lumber & Wood Production, Luxury Goods, Marine Shipping, Medical Care Facilities, Medical Devices, Medical Distribution, Medical Instruments & Supplies, Metal Fabrication, Mortgage Finance, Oil & Gas E&P, Oil & Gas Equipment & Services, Oil & Gas Integrated, Oil & Gas Midstream, Oil & Gas Refining & Marketing, Other Industrial Metals & Mining, Other Precious Metals & Mining, Packaged Foods, Packaging & Containers, Paper & Paper Products, Personal Services, Pollution & Treatment Controls, Publishing, REIT - Diversified, REIT - Healthcare Facilities, REIT - Hotel & Motel, REIT - Industrial, REIT - Mortgage, REIT - Office, REIT - Residential, REIT - Retail, REIT - Specialty, Railroads, Real Estate - Development, Real Estate Services, Recreational Vehicles, Rental & Leasing Services, Residential Construction, Resorts & Casinos, Restaurants, Scientific & Technical Instruments, Security & Protection Services, Semiconductor Equipment & Materials, Semiconductors, Software - Application, Software - Infrastructure, Solar, Specialty Business Services, Specialty Chemicals, Specialty Industrial Machinery, Specialty Retail, Staffing & Employment Services, Steel, Telecom Services, Tobacco, Tools & Accessories, Travel Services, Trucking, Utilities - Diversified, Utilities - Independent Power Producers, Utilities - Regulated Electric, Utilities - Regulated Gas, Utilities - Regulated Water, Utilities - Renewable, Waste Management",
+    "ranking": "Configured per-factor operator pipelines, vec_avg; global final rank 1=best",
+    "calculated_at": "2026-10-26T16:38:33.404083+00:00",
+    "missing_value_policy": {
+      "method": "drop",
+      "scope": "score_group",
+      "stage": "raw_factors_before_ranking",
+      "donor_pool": "same monthly active eligible universe; no future observations",
+      "empty_group": "remains missing and is dropped"
+    },
+    "data_coverage": {
+      "requested_tickers": 1350,
+      "cached_price_tickers": 1163,
+      "raw_statement_tickers": 1224,
+      "ever_scored_tickers": 933
+    },
+    "book_equity_policy": "finite signed B/M retained; negative equity is not a global exclusion"
+  }
+}

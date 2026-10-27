@@ -15,7 +15,9 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from market_data import CointegrationConfig, PairAnalyzer, PairResearchConfig, YahooFinanceSource, _key
+from .research import CointegrationConfig, PairAnalyzer, PairResearchConfig, _key
+from market_data import YahooFinanceSource
+from spot_fx import SpotFX
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,10 +27,14 @@ class PairPoolConfig:
     target_pairs: int = 300
     target_commodity_pairs: int = 50
     target_other_etf_pairs: int = 50
+    target_fx_pairs: int = 50
     max_etf_pairs_per_group: int = 5
     include_equities: bool = True
     include_etfs: bool = True
+    include_fx: bool = True
     require_etf_i1: bool = True
+    require_fx_i1: bool = True
+    fx_unit_step: int = 1000
     max_assets: int = 1000
     min_market_cap: float = 10_000_000_000
     min_etf_assets: float = 100_000_000
@@ -45,13 +51,13 @@ class PairPoolConfig:
     )
     cointegration: CointegrationConfig = field(
         default_factory=lambda: CointegrationConfig(train_end="2024-12-31"))
-    relationship_file: Path = Path("industry_relationships.json")
-    etf_catalog_file: Path = Path("etf_universe.json")
-    output_file: Path = Path("data/pair_pool.csv")
+    relationship_file: Path = Path("methods/cointegration/industry_relationships.json")
+    etf_catalog_file: Path = Path("methods/cointegration/etf_universe.json")
+    output_file: Path = Path("methods/cointegration/data/pool.csv")
 
     def __post_init__(self):
         for name in ("target_pairs", "target_commodity_pairs", "target_other_etf_pairs",
-                     "max_etf_pairs_per_group", "max_assets", "liquidity_window", "batch_size"):
+                     "target_fx_pairs", "fx_unit_step", "max_etf_pairs_per_group", "max_assets", "liquidity_window", "batch_size"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 raise ValueError(name + " must be a positive integer")
@@ -64,8 +70,8 @@ class PairPoolConfig:
             raise ValueError("Use an order fraction in (0, 1] and correlation in (0, 1)")
         if self.confidence_level not in (0.90, 0.95):
             raise ValueError("confidence_level must be 0.90 or 0.95")
-        if not self.include_equities and not self.include_etfs:
-            raise ValueError("Enable equities, ETFs or both.")
+        if not self.include_equities and not self.include_etfs and not self.include_fx:
+            raise ValueError("Enable equities, ETFs or spot FX.")
 
     def source_config(self):
         return PairResearchConfig.from_relationship_file(
@@ -93,9 +99,11 @@ class PairPoolSource(YahooFinanceSource):
             frames.append(frame)
         if self.pool_config.include_etfs:
             frames.append(self.etf_universe())
+        if self.pool_config.include_fx:
+            frames.append(SpotFX.universe(self.pool_config.fx_unit_step))
         frames = [frame for frame in frames if not frame.empty]
         if not frames:
-            raise RuntimeError("No equity or ETF metadata returned.")
+            raise RuntimeError("No equity, ETF or FX universe returned.")
         return pd.concat(frames, ignore_index=True)
 
     def etf_universe(self):
@@ -213,7 +221,9 @@ class PairPoolBuilder:
         defaults = {"instrument_type": "EQUITY", "pair_family": "equity", "asset_class": "equity",
                     "exposure_group": "", "implementation": "equities", "tracking_pair_group": False,
                     "fund_assets": np.nan, "fund_assets_asof": "", "fund_family": "", "source_urls": "",
-                    "market_cap": np.nan, "market_cap_asof": ""}
+                    "market_cap": np.nan, "market_cap_asof": "", "unit_step": 1,
+                    "base_currency": "", "quote_currency": "USD", "source_ticker": "",
+                    "price_transform": "identity"}
         for column, default in defaults.items():
             if column not in universe:
                 universe[column] = default
@@ -229,21 +239,31 @@ class PairPoolBuilder:
         equities = equities.sort_values("market_cap", ascending=False, kind="stable").head(config.max_assets)
         funds = universe.loc[universe.instrument_type.eq("ETF") & pd.to_numeric(universe.fund_assets, errors="coerce").ge(config.min_etf_assets)]
         funds = funds.sort_values("fund_assets", ascending=False, kind="stable")
+        currencies = universe.loc[universe.instrument_type.eq("FX")]
         if not config.include_equities:
             equities = equities.iloc[:0]
         if not config.include_etfs:
             funds = funds.iloc[:0]
-        universe = pd.concat([equities, funds], ignore_index=True)
+        if not config.include_fx:
+            currencies = currencies.iloc[:0]
+        universe = pd.concat([equities, funds, currencies], ignore_index=True)
         end = (pd.Timestamp(train.train_end) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-        histories = self.source.history(universe.ticker.tolist(), train.train_start, end)
+        download_tickers = list(dict.fromkeys(universe.ticker.tolist() + (["SPY"] if config.include_fx else [])))
+        histories = self.source.history(download_tickers, train.train_start, end)
+        fx_calendar = histories.get("SPY", pd.DataFrame()).index
+        if len(currencies) and len(fx_calendar) == 0:
+            raise RuntimeError("SPY history is required for the common FX session calendar.")
         assets, close_series, rejected = [], [], Counter()
         rejected["ETF_missing_or_small_AUM"] = int(discovered.instrument_type.eq("ETF").sum() - len(funds))
         for row in universe.to_dict("records"):
             frame = histories.get(row["ticker"])
+            is_fx = row["instrument_type"] == "FX"
             if frame is None or not {"Close", "Volume"}.issubset(frame.columns):
                 rejected["missing_close_or_volume"] += 1
                 continue
             frame = frame.sort_index().loc[train.train_start:train.train_end, ["Close", "Volume"]]
+            if is_fx:
+                frame = frame.reindex(fx_calendar)
             close = self.tester.training_prices(frame.Close)
             if len(close) < max(train.min_observations, config.liquidity_window):
                 rejected["insufficient_training_history"] += 1
@@ -252,34 +272,36 @@ class PairPoolBuilder:
             if (pd.Timestamp(train.train_end) - close.index[-1]).days > 10:
                 rejected["stale_formation_prices"] += 1
                 continue
-            if close.iloc[-1] < config.min_price:
+            if not is_fx and close.iloc[-1] < config.min_price:
                 rejected["price_below_minimum"] += 1
                 continue
-            if close.iloc[-1] > config.reference_long_amount:
+            if close.iloc[-1] * row["unit_step"] > config.reference_long_amount:
                 rejected["whole_share_budget_too_small"] += 1
                 continue
             volume = pd.to_numeric(tail.Volume, errors="coerce")
-            if not (np.isfinite(volume) & volume.gt(0)).all():
+            if not is_fx and not (np.isfinite(volume) & volume.gt(0)).all():
                 rejected["invalid_formation_volume"] += 1
                 continue
-            adv = float((tail.Close * volume).mean())
-            if adv < config.min_average_dollar_volume:
+            adv = np.nan if is_fx else float((tail.Close * volume).mean())
+            if not is_fx and adv < config.min_average_dollar_volume:
                 rejected["dollar_volume_below_minimum"] += 1
                 continue
-            if row["instrument_type"] == "ETF" and config.require_etf_i1:
+            if ((row["instrument_type"] == "ETF" and config.require_etf_i1)
+                    or (is_fx and config.require_fx_i1)):
                 try:
                     level = self.tester.cointegration.adf_test(close)
                     difference = self.tester.cointegration.adf_test(close.diff())
                 except (ValueError, np.linalg.LinAlgError, FloatingPointError):
-                    rejected["ETF_I1_test_error"] += 1
+                    rejected["FX_I1_test_error" if is_fx else "ETF_I1_test_error"] += 1
                     continue
                 if level["stationary_95"] or not difference["stationary_95"]:
-                    rejected["ETF_price_not_supported_as_I1"] += 1
+                    rejected["FX_price_not_supported_as_I1" if is_fx else "ETF_price_not_supported_as_I1"] += 1
                     continue
                 row.update(level_adf_statistic=level["test_statistic"],
                            difference_adf_statistic=difference["test_statistic"])
             row.update(average_dollar_volume=adv, liquidity_date=str(close.index[-1].date()),
-                       formation_close=float(close.iloc[-1]))
+                       formation_close=float(close.iloc[-1]),
+                       liquidity_screen="curated_spot_fx_no_volume" if is_fx else "historical_dollar_volume")
             assets.append(row)
             close_series.append(close.rename(row["ticker"]))
         if len(assets) < 2:
@@ -292,6 +314,7 @@ class PairPoolBuilder:
                 keep = assets.loc[present, "average_dollar_volume"].idxmax()
                 assets = assets.drop(index=[ticker for ticker in present if ticker != keep])
         assets["size_rank"] = assets.market_cap.where(assets.instrument_type.eq("EQUITY"), assets.fund_assets)
+        assets.loc[assets.instrument_type.eq("FX"), "size_rank"] = 0
         assets = assets.sort_values("size_rank", ascending=False, kind="stable")
         prices = pd.concat(close_series, axis=1).sort_index()
         prices = prices.loc[:, assets.index]
@@ -309,6 +332,8 @@ class PairPoolBuilder:
                     same = industry_y == industry_x
                     related = industry_x in self.related.get(industry_y, set()) or industry_y in self.related.get(industry_x, set())
                     scope = "same_industry" if same else "related_industry"
+                elif family == "spot_fx":
+                    same, related, scope = True, False, "spot_fx_usd_quotes"
                 else:
                     group_y, group_x = assets.at[y, "exposure_group"], assets.at[x, "exposure_group"]
                     same = group_y == group_x
@@ -322,8 +347,10 @@ class PairPoolBuilder:
         candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
         accepted, pair_rejected, tested = [], Counter(), 0
         targets = {"equity": config.target_pairs, "commodity_etf": config.target_commodity_pairs,
-                   "other_etf": config.target_other_etf_pairs}
-        enabled = ({"equity"} if config.include_equities else set()) | ({"commodity_etf", "other_etf"} if config.include_etfs else set())
+                   "other_etf": config.target_other_etf_pairs, "spot_fx": config.target_fx_pairs}
+        enabled = (({"equity"} if config.include_equities else set())
+                   | ({"commodity_etf", "other_etf"} if config.include_etfs else set())
+                   | ({"spot_fx"} if config.include_fx else set()))
         counts, exposure_counts = Counter(), Counter()
         LOGGER.info("%s discovered assets; %s liquid assets; %s correlated industry/related pairs",
                     len(universe), len(assets), len(candidates))
@@ -331,7 +358,7 @@ class PairPoolBuilder:
             if counts[family] >= targets[family]:
                 continue
             exposure_key = tuple(sorted((assets.at[y, "exposure_group"], assets.at[x, "exposure_group"])))
-            if family != "equity" and exposure_counts[exposure_key] >= config.max_etf_pairs_per_group:
+            if family.endswith("_etf") and exposure_counts[exposure_key] >= config.max_etf_pairs_per_group:
                 continue
             tested += 1
             test = self.tester.analyze_pair(prices[y], prices[x], confidence_level=config.confidence_level)
@@ -349,7 +376,7 @@ class PairPoolBuilder:
             if not np.isfinite(std) or std <= 1e-10:
                 pair_rejected["degenerate_spread"] += 1
                 continue
-            if max(participation_y, participation_x) > config.max_order_fraction_adv:
+            if family != "spot_fx" and max(participation_y, participation_x) > config.max_order_fraction_adv:
                 pair_rejected["reference_order_exceeds_adv_limit"] += 1
                 continue
             tracking_pair = (family != "equity" and scope == "same_etf_exposure"
@@ -373,11 +400,13 @@ class PairPoolBuilder:
                 for column in ("industry", "market_cap", "market_cap_asof", "fund_assets", "fund_assets_asof",
                                "instrument_type", "asset_class", "exposure_group", "implementation", "source_urls",
                                "fund_family", "average_dollar_volume", "liquidity_date", "formation_close",
+                               "liquidity_screen", "unit_step", "base_currency", "quote_currency",
+                               "source_ticker", "price_transform",
                                "level_adf_statistic", "difference_adf_statistic"):
                     row[column + "_" + suffix] = assets.loc[ticker].get(column, np.nan)
             accepted.append(row)
             counts[family] += 1
-            if family != "equity":
+            if family.endswith("_etf"):
                 exposure_counts[exposure_key] += 1
             if len(accepted) % 25 == 0:
                 LOGGER.info("Accepted %s total pairs; families=%s; after %s tests", len(accepted), dict(counts), tested)
@@ -411,5 +440,10 @@ class PairPoolBuilder:
                 "asset_rejections": dict(rejected), "pair_rejections": dict(pair_rejected),
                 "family_counts": dict(counts), "targets": {name: targets[name] for name in enabled},
                 "etf_coverage": coverage,
+                "fx_coverage": pd.DataFrame({
+                    "discovered": [len(currencies)],
+                    "formation_eligible": [int(assets.instrument_type.eq("FX").sum())],
+                    "accepted_pairs": [counts["spot_fx"]],
+                }),
                 "events": list(self.source.events), "output_file": output,
                 "target_reached": all(counts[name] >= targets[name] for name in enabled)}
